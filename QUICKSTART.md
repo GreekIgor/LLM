@@ -1,5 +1,38 @@
 # 🚀 Быстрый старт - HW9
 
+## 🎯 Самый быстрый способ (Рекомендуется!)
+
+### Автоматический запуск всех сервисов
+
+**Windows (PowerShell):**
+```powershell
+.\start_all_services.ps1
+```
+
+**Linux/Mac:**
+```bash
+bash start_all_services.sh
+```
+
+Скрипт автоматически:
+- ✅ Проверит/создаст виртуальное окружение
+- ✅ Установит все зависимости
+- ✅ Запустит MLflow tracking server
+- ✅ Запустит vLLM с загрузкой модели
+- ✅ Протестирует подключение
+- ✅ Запустит FastAPI inference service
+
+После запуска доступны:
+- 📊 MLflow UI: http://localhost:5000
+- 🤖 vLLM API: http://localhost:8000
+- 🌐 Inference Service: http://localhost:8080
+- 📖 API Docs: http://localhost:8080/docs
+- 📈 Metrics: http://localhost:8080/metrics
+
+---
+
+## 📋 Ручной запуск (если нужен контроль)
+
 ## Шаг 1: Установка зависимостей (5 минут)
 
 ```bash

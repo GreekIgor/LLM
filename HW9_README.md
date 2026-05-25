@@ -201,12 +201,17 @@ mlflow ui
 3. HTTP запросы к LLM серверам
 4. Создание кастомных метрик в MLflow
 5. LLM-as-a-Judge паттерн
+6. **FastAPI production сервисы**
+7. **Prometheus метрики для мониторинга**
+8. **Автоматизированное тестирование моделей**
 
 ### ✅ Практическое применение:
 - Автоматическая оценка качества ответов
 - A/B тестирование разных моделей
 - Мониторинг качества в продакшене
 - Оценка результатов fine-tuning
+- **Production-ready деплой с метриками**
+- **Continuous benchmarking pipeline**
 
 ---
 
@@ -250,6 +255,72 @@ mlflow ui
 2. **Примеры запросов** через HTTP и OpenAI API
 3. **MLflow эксперимент** с метриками оценки качества
 4. **Оценённый датасет** с рейтингами от LLM-судьи
+5. **FastAPI production сервис** с Prometheus метриками
+6. **Автоматический бенчмаркинг** с выбором лучшей модели
+
+---
+
+## 🏗️ Production Components (NEW!)
+
+### inference_service.py - FastAPI Production Service
+
+Полноценный production-ready сервис с:
+- ✅ **Prometheus метрики**: requests, tokens, latency, errors, active requests
+- ✅ **Health checks**: `/health` endpoint
+- ✅ **OpenAPI документация**: автоматически сгенерированная `/docs`
+- ✅ **MLflow интеграция**: автоматическое логирование всех запросов
+- ✅ **Error handling**: правильная обработка ошибок и таймаутов
+
+**Запуск:**
+```bash
+python inference_service.py
+```
+
+**Доступные эндпоинты:**
+- `GET /health` - проверка работоспособности
+- `GET /metrics` - Prometheus метрики
+- `POST /generate` - генерация текста
+- `GET /docs` - Swagger UI
+
+### benchmark_vllm_models.py - Automated Benchmarking
+
+Автоматизированное тестирование моделей:
+- ✅ Сравнение нескольких моделей на Q&A задачах
+- ✅ Вычисление F1 Score и Exact Match
+- ✅ Измерение latency и throughput
+- ✅ Автоматический выбор лучшей модели
+- ✅ Логирование всех результатов в MLflow
+
+**Запуск:**
+```bash
+export MODELS="facebook/opt-1.3b,EleutherAI/gpt-neo-125M"
+python benchmark_vllm_models.py
+```
+
+**Результаты:**
+- `benchmark_summary.json` - сводка всех результатов
+- `best_model.txt` - имя лучшей модели
+- MLflow runs для каждой модели
+
+### start_all_services.sh / .ps1 - One-Command Setup
+
+Автоматический запуск всех компонентов:
+- MLflow tracking server
+- vLLM server с загрузкой модели
+- FastAPI inference service
+- Автоматическое тестирование
+
+**Использование:**
+
+Linux/Mac:
+```bash
+bash start_all_services.sh
+```
+
+Windows:
+```powershell
+.\start_all_services.ps1
+```
 
 ---
 
