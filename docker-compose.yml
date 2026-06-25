@@ -1,0 +1,78 @@
+# Milvus 2.5 в режиме standalone (всё в Docker).
+# Стек состоит из ТРЁХ контейнеров — это архитектура самого Milvus:
+#   1) etcd   — хранит метаданные (схемы коллекций, состояние сегментов, индексов).
+#   2) minio  — S3-совместимое объектное хранилище для самих данных, бинарных логов и файлов индексов.
+#   3) milvus  — сам движок (координаторы + узлы query/data/index в одном процессе "standalone").
+#
+# Запуск:   docker compose up -d
+# Проверка: docker compose ps      (milvus-standalone должен стать healthy)
+# Остановка: docker compose down   (добавь -v чтобы удалить тома с данными)
+#
+# Порты наружу:
+#   19530 — gRPC API (с ним работает pymilvus из ноутбука)
+#   9091  — health/метрики Milvus
+#   9001  — веб-консоль MinIO (логин/пароль: minioadmin / minioadmin)
+
+services:
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.16
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ./volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"   # веб-консоль
+      - "9000:9000"   # S3 API
+    volumes:
+      - ./volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.5.4
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ./volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"   # gRPC — основной порт для клиента
+      - "9091:9091"     # health/metrics
+    depends_on:
+      - etcd
+      - minio
+
+networks:
+  default:
+    name: milvus

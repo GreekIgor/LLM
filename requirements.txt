@@ -1,0 +1,8 @@
+# ДЗ-14: RAG-система с векторным поиском по Milvus
+pymilvus>=2.5.0        # клиент Milvus (gRPC), создание коллекций/индексов/поиск
+openai>=1.40.0         # эмбеддинги text-embedding-3-*
+python-dotenv>=1.0.0   # загрузка ключей из .env
+annoy>=1.17.0          # оригинальный ANNOY (Spotify) — для сравнения, т.к. Milvus убрал ANNOY в 2.3+
+numpy>=1.26.0          # векторные операции, расчёт recall
+pandas>=2.0.0          # таблицы с результатами бенчмарка
+tabulate>=0.9.0        # красивый вывод DataFrame в markdown/таблицы
