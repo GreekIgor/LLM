@@ -1,0 +1,6 @@
+# LLM-приложение: суммаризатор документов с мониторингом Langfuse
+openai>=1.40.0
+langfuse>=3.0.0
+python-dotenv>=1.0.0
+tiktoken>=0.7.0
+pypdf>=4.0.0
