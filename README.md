@@ -1,77 +1,64 @@
-# ДЗ-14: RAG-система с поиском по собственной базе документов (Milvus + OpenAI)
+# ДЗ-16: Дообучение модели (LoRA) + интеграция с внешними инструментами
 
-Векторный поиск для **RAG** на векторной БД **Milvus** (в Docker). Эмбеддинги — **OpenAI**
-`text-embedding-3-small`. Реализация — Jupyter-ноутбук [`hw14.ipynb`](hw14.ipynb).
+Трек B — продвинутый чат-ассистент. Дообучаем **Qwen2.5-1.5B-Instruct** методом **QLoRA** под
+качественные диалоги, затем даём модели доступ к внешним **инструментам** (LangChain `@tool`)
+и показываем интеграцию через **ReAct-агента**.
 
-## Почему Milvus
-Из рассмотренных вариантов (Pinecone / Chroma / Milvus / ClickHouse) только Milvus даёт в одном
-месте всё, что нужно для задания: self-host в Docker, проектирование схемы, тонкая настройка
-индексов и сравнение нескольких ANN-алгоритмов.
+## Структура
+| Файл | Что делает |
+|---|---|
+| [`finetune_lora.ipynb`](finetune_lora.ipynb) | Часть 1: QLoRA fine-tuning на сабсете `lmsys-chat-1m`, сравнение «до/после», сохранение адаптера |
+| [`tools.py`](tools.py) | Часть 2: инструменты `@tool` — `web_search`, `fact_check`, `calculator` |
+| [`agent_demo.ipynb`](agent_demo.ipynb) | Часть 3: ReAct-агент — дообученная модель вызывает инструменты в реальных сценариях |
+| `requirements.txt`, `.env.example` | зависимости и ключи |
 
-> ⚠️ **ANNOY в Milvus.** Начиная с Milvus 2.3.0 индекс ANNOY **удалён**
-> ([issue #30608](https://github.com/milvus-io/milvus/issues/30608)). В Milvus 2.5 нативно есть
-> **IVF** (IVF_FLAT/IVF_SQ8/IVF_PQ), **HNSW**, SCANN, DISKANN. Поэтому **IVF vs HNSW** сравниваем
-> прямо в Milvus, а **ANNOY** — через оригинальную библиотеку `annoy` (Spotify) отдельным блоком.
-
-## Что покрыто (по пунктам задания)
-**Часть 1 — настройка и индексация**
-- ✅ векторная БД Milvus поднята в Docker (`docker-compose.yml`);
-- ✅ собственный датасет с метаданными (`documents.json`);
-- ✅ эмбеддинги через OpenAI + индексация;
-- ✅ оптимальная схема коллекции (векторное поле + скалярные для фильтров);
-
-**Изучение ANN-алгоритмов**
-- ✅ сравнение **IVF vs HNSW vs ANNOY** на recall@k и latency;
-- ✅ разобраны параметры (`nlist`/`nprobe`, `M`/`efConstruction`/`ef`, `n_trees`/`search_k`);
-- ✅ trade-off скорость ↔ точность (сводная таблица + выводы);
-
-**Часть 2 — реализация поиска**
-- ✅ семантический поиск по векторам;
-- ✅ метрики похожести (cosine / L2 / IP);
-- ✅ фильтрация по метаданным (булевы выражения Milvus);
-- ✅ подбор `top-k` и search-параметров;
-- ✅ бонус: мини-RAG (retrieval + ответ LLM по контексту).
+## ⚠️ Про железо
+Локально NVIDIA GPU нет (только Intel HD 520), а `bitsandbytes` (4-бит QLoRA) требует CUDA.
+Поэтому **`finetune_lora.ipynb` рассчитан на Google Colab** (Runtime → Change runtime type → **T4 GPU**)
+или другую машину с CUDA. `tools.py` и `agent_demo.ipynb` работают и на CPU (модель 1.5B медленно,
+но запускается; на GPU — быстро).
 
 ## Запуск
 
-```bash
-# 1. Поднять Milvus (etcd + minio + milvus-standalone)
-docker compose up -d
-docker compose ps                 # дождись статуса healthy у milvus-standalone (~30-60 сек)
+### Часть 1 — fine-tuning (в Colab)
+1. Открой `finetune_lora.ipynb` в Colab, включи GPU.
+2. Получи доступ к gated-датасету: прими условия на
+   [lmsys/lmsys-chat-1m](https://huggingface.co/datasets/lmsys/lmsys-chat-1m) и задай `HF_TOKEN`.
+   *(Нет доступа — ноутбук сам переключится на открытый `ultrachat_200k`.)*
+3. Выполни ячейки сверху вниз: установка → загрузка модели (4-бит) → baseline → датасет →
+   LoRA-обучение → сравнение «до/после» → сохранение адаптера.
 
-# 2. Python-окружение и ключ OpenAI
+### Части 2–3 — инструменты и агент
+```bash
 pip install -r requirements.txt
-copy .env.example .env            # Windows;  Linux/macOS: cp .env.example .env
-#  -> впиши OPENAI_API_KEY в .env
-
-# 3. Открыть ноутбук
-jupyter notebook hw14.ipynb       # либо открыть в VS Code и выполнить ячейки сверху вниз
+cp .env.example .env          # Windows: copy .env.example .env
+python tools.py               # быстрый тест инструментов без LLM
+jupyter notebook agent_demo.ipynb
 ```
+В `agent_demo.ipynb` поставь `LOAD_ADAPTER = True`, если обучил адаптер из части 1
+(иначе используется базовая модель — демо инструментов всё равно работает).
 
-Остановить и (опционально) удалить данные:
-```bash
-docker compose down               # остановить
-docker compose down -v            # + удалить тома (volumes/) с данными Milvus
-```
+## Ключевые понятия
+- **LoRA / PEFT** — обучаем не все веса, а маленькие низкоранговые добавки (`r=16`) в слои
+  attention/MLP; базовая модель заморожена. Обучается ~доли процента параметров.
+- **QLoRA** — LoRA поверх 4-битной (nf4) модели: влезает в один бесплатный GPU.
+- **LangChain `@tool`** — функция + описание + схема входа; по описанию агент решает, что вызвать.
+- **ReAct** — цикл *Reasoning + Acting*: модель пишет `Thought/Action/Action Input`, система
+  выполняет инструмент и возвращает `Observation`, пока не появится `Final Answer`.
 
-## Что такое эмбеддинги (кратко)
-Эмбеддинг — представление текста плотным вектором фиксированной длины; семантически близкие
-тексты дают близкие векторы (по косинусу). Варианты:
-- **OpenAI**: `text-embedding-3-small` (dim 1536, дёшево — используем его),
-  `text-embedding-3-large` (dim 3072, точнее), `text-embedding-ada-002` (легаси).
-- **Локальные** (через `sentence-transformers`, бесплатно): `all-MiniLM-L6-v2` (dim 384, быстрый),
-  `BAAI/bge-m3`, `intfloat/e5-large` (топ-качество, мультиязычность).
+## Инструменты (`tools.py`)
+| Tool | Назначение | Зависимости |
+|---|---|---|
+| `web_search` | свежая информация из интернета | DuckDuckGo (`ddgs`), без ключа |
+| `fact_check` | факты/справки из Wikipedia | REST API, без ключа |
+| `calculator` | безопасные вычисления | `numexpr` |
 
-## Файлы
-- `docker-compose.yml` — Milvus standalone (3 контейнера) с комментариями.
-- `hw14.ipynb` — основной ноутбук (всё с русскими комментариями).
-- `documents.json` — датасет: 20 документов с полями `category` / `source` / `year`.
-- `requirements.txt`, `.env.example`.
-- `volumes/` — данные Milvus (создаётся Docker'ом, в git не попадает).
+## Демо-сценарии (`agent_demo.ipynb`)
+1. **Математика** → `calculator`.
+2. **Проверка факта** («кто написал Войну и мир») → `fact_check`.
+3. **Свежие данные** (новости про Milvus 2.5) → `web_search`.
+4. **Многоступенчатое рассуждение** (высота Эвереста в метрах → перевод в футы) →
+   `fact_check` + `calculator`.
 
-## Порты
-| Порт | Сервис |
-|---|---|
-| 19530 | Milvus gRPC API (с ним работает `pymilvus`) |
-| 9091 | Milvus health/metrics |
-| 9001 | веб-консоль MinIO (`minioadmin` / `minioadmin`) |
+> Качество следования формату ReAct у модели 1.5B ограничено — возможны срывы формата.
+> Это ожидаемо для демонстрации; лечится дообучением под tool-use или моделью побольше.

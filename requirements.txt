@@ -1,8 +1,19 @@
-# ДЗ-14: RAG-система с векторным поиском по Milvus
-pymilvus>=2.5.0        # клиент Milvus (gRPC), создание коллекций/индексов/поиск
-openai>=1.40.0         # эмбеддинги text-embedding-3-*
-python-dotenv>=1.0.0   # загрузка ключей из .env
-annoy>=1.17.0          # оригинальный ANNOY (Spotify) — для сравнения, т.к. Milvus убрал ANNOY в 2.3+
-numpy>=1.26.0          # векторные операции, расчёт recall
-pandas>=2.0.0          # таблицы с результатами бенчмарка
-tabulate>=0.9.0        # красивый вывод DataFrame в markdown/таблицы
+# ДЗ-15: LoRA fine-tuning + интеграция LLM с внешними инструментами
+
+# ── Fine-tuning (нужен GPU/CUDA — обычно Google Colab T4) ────────────────────
+torch>=2.2.0
+transformers>=4.44.0
+peft>=0.12.0            # LoRA / параметрически-эффективный fine-tuning
+trl>=0.10.0            # SFTTrainer для supervised fine-tuning
+datasets>=2.20.0       # загрузка датасета (lmsys-chat-1m и др.)
+accelerate>=0.33.0
+bitsandbytes>=0.43.0   # 4-bit квантование (QLoRA). ВНИМАНИЕ: Linux/CUDA. На Windows локально не работает.
+
+# ── Инструменты + агент (работают на CPU) ────────────────────────────────────
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-huggingface>=0.1.0   # обёртка HF-модели в LangChain
+ddgs>=6.0.0                    # DuckDuckGo поиск (без API-ключа)
+numexpr>=2.10.0               # безопасный калькулятор
+requests>=2.31.0              # Wikipedia REST API
+python-dotenv>=1.0.0
