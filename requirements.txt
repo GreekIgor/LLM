@@ -1,19 +1,21 @@
-# ДЗ-15: LoRA fine-tuning + интеграция LLM с внешними инструментами
+# ДЗ-17: Извлечение сущностей и событий (NER + Information Extraction)
 
-# ── Fine-tuning (нужен GPU/CUDA — обычно Google Colab T4) ────────────────────
+# ── Локальный inference на CPU (основной пайплайн) ───────────────────────────
 torch>=2.2.0
 transformers>=4.44.0
-peft>=0.12.0            # LoRA / параметрически-эффективный fine-tuning
-trl>=0.10.0            # SFTTrainer для supervised fine-tuning
-datasets>=2.20.0       # загрузка датасета (lmsys-chat-1m и др.)
-accelerate>=0.33.0
-bitsandbytes>=0.43.0   # 4-bit квантование (QLoRA). ВНИМАНИЕ: Linux/CUDA. На Windows локально не работает.
+datasets>=2.20.0          # загрузка CUAD
+accelerate>=0.33.0        # device_map, ускорение загрузки
 
-# ── Инструменты + агент (работают на CPU) ────────────────────────────────────
-langchain>=0.3.0
-langchain-community>=0.3.0
-langchain-huggingface>=0.1.0   # обёртка HF-модели в LangChain
-ddgs>=6.0.0                    # DuckDuckGo поиск (без API-ключа)
-numexpr>=2.10.0               # безопасный калькулятор
-requests>=2.31.0              # Wikipedia REST API
-python-dotenv>=1.0.0
+# ── Метрики и анализ ─────────────────────────────────────────────────────────
+numpy>=1.26.0
+pandas>=2.0.0             # таблицы сравнения моделей
+psutil>=5.9.0             # замер RAM локально
+matplotlib>=3.7.0         # графики throughput / качество (в ноутбуке)
+
+# ── Demo-приложение ──────────────────────────────────────────────────────────
+gradio>=4.0.0            # интерактивная демонстрация извлечения
+
+# ── Только для Colab T4 (7B-модели, 4-битное квантование) ────────────────────
+# Раскомментируй в Colab; локально на Windows без CUDA bitsandbytes не работает.
+# bitsandbytes>=0.43.0   # 4-bit квантование (QLoRA-стиль), нужен CUDA
+# sentencepiece>=0.2.0   # токенайзер Llama-2 / Mistral

@@ -1,64 +1,93 @@
-# ДЗ-16: Дообучение модели (LoRA) + интеграция с внешними инструментами
+# ДЗ-17: Извлечение сущностей и событий из текстов (NER + Information Extraction)
 
-Трек B — продвинутый чат-ассистент. Дообучаем **Qwen2.5-1.5B-Instruct** методом **QLoRA** под
-качественные диалоги, затем даём модели доступ к внешним **инструментам** (LangChain `@tool`)
-и показываем интеграцию через **ReAct-агента**.
+Извлекаем структурированную информацию (сущности и отношения) из коммерческих контрактов
+**[CUAD](https://huggingface.co/datasets/theatticusproject/cuad)** с помощью локально
+развёрнутых инструктивных LLM в режиме **zero/few-shot** (подход «LLM-as-extractor»):
+модель получает текст и возвращает строгий JSON по фиксированной схеме сущностей.
+
+**Схема (7 типов):** `PERSON, ORG, MONEY, DATE, CONTRACT_TYPE, OBLIGATION, JURISDICTION`.
 
 ## Структура
+
 | Файл | Что делает |
 |---|---|
-| [`finetune_lora.ipynb`](finetune_lora.ipynb) | Часть 1: QLoRA fine-tuning на сабсете `lmsys-chat-1m`, сравнение «до/после», сохранение адаптера |
-| [`tools.py`](tools.py) | Часть 2: инструменты `@tool` — `web_search`, `fact_check`, `calculator` |
-| [`agent_demo.ipynb`](agent_demo.ipynb) | Часть 3: ReAct-агент — дообученная модель вызывает инструменты в реальных сценариях |
-| `requirements.txt`, `.env.example` | зависимости и ключи |
+| [`ie_extractor.py`](ie_extractor.py) | Ядро: промпт со схемой + one-shot, устойчивый парсер JSON, обёртка `Extractor` (load / `extract` / `extract_batch`) |
+| [`data_prep.py`](data_prep.py) | Загрузка CUAD (parquet-ветка хаба), подвыборка, маппинг категорий CUAD → наша схема и сборка **gold** |
+| [`evaluate.py`](evaluate.py) | Метрики precision / recall / F1 с нечётким сопоставлением спанов (per-type + micro) |
+| [`benchmark.py`](benchmark.py) | Throughput (tokens/sec, docs/sec), RAM/VRAM, сравнение моделей и `batch_size` |
+| [`app.py`](app.py) | Demo (Gradio): текст контракта → подсвеченные сущности + JSON |
+| [`ie_extraction.ipynb`](ie_extraction.ipynb) | Основной ноутбук: этапы 1–4 локально на маленьких моделях (Qwen2.5 0.5B/1.5B, CPU) |
+| [`colab_7b.ipynb`](colab_7b.ipynb) | Colab T4: этап 1 на 7B — Mistral-7B / Llama-2-7B, **4-bit quantized vs full precision**, VRAM |
+| `requirements.txt` | зависимости |
 
-## ⚠️ Про железо
-Локально NVIDIA GPU нет (только Intel HD 520), а `bitsandbytes` (4-бит QLoRA) требует CUDA.
-Поэтому **`finetune_lora.ipynb` рассчитан на Google Colab** (Runtime → Change runtime type → **T4 GPU**)
-или другую машину с CUDA. `tools.py` и `agent_demo.ipynb` работают и на CPU (модель 1.5B медленно,
-но запускается; на GPU — быстро).
+## Этапы (по заданию)
+
+1. **Локальное развёртывание.** Локально (CPU) — две модели Qwen2.5 (0.5B и 1.5B), full
+   precision. Сравнение 7B *quantized vs full precision* — в `colab_7b.ipynb` (нужен CUDA).
+2. **Подготовка данных.** Подвыборка CUAD (100–200 для demo, 500–1K для прогона), промпты со
+   строгой JSON-схемой + one-shot пример.
+3. **Оптимизация для IE.** Batch processing (`extract_batch`), left-padding, обрезка входа,
+   измерение throughput.
+4. **Анализ производительности.** Скорость (tokens/sec, docs/sec), качество (precision/recall/F1),
+   ресурсы (RAM локально, VRAM на GPU).
+
+## Откуда берётся gold для метрик
+
+CUAD размечен юристами по 41 категории. Несколько **экстрактивных** категорий напрямую
+ложатся на нашу схему — из них строим gold без ручной разметки:
+
+| Категория CUAD | Тип сущности |
+|---|---|
+| Document Name | `CONTRACT_TYPE` |
+| Parties | `ORG` |
+| Agreement / Effective / Expiration Date | `DATE` |
+| Governing Law | `JURISDICTION` |
+
+По `PERSON / MONEY / OBLIGATION` прямого gold в CUAD нет — модель их извлекает (видно в demo),
+но в метриках они не учитываются, чтобы не штрафовать несправедливо. Сопоставление спанов —
+нечёткое (нормализация регистра/пунктуации + перекрытие токенов), т.к. модель может писать
+«Acme Corp.» там, где gold «Acme Corp».
 
 ## Запуск
 
-### Часть 1 — fine-tuning (в Colab)
-1. Открой `finetune_lora.ipynb` в Colab, включи GPU.
-2. Получи доступ к gated-датасету: прими условия на
-   [lmsys/lmsys-chat-1m](https://huggingface.co/datasets/lmsys/lmsys-chat-1m) и задай `HF_TOKEN`.
-   *(Нет доступа — ноутбук сам переключится на открытый `ultrachat_200k`.)*
-3. Выполни ячейки сверху вниз: установка → загрузка модели (4-бит) → baseline → датасет →
-   LoRA-обучение → сравнение «до/после» → сохранение адаптера.
-
-### Части 2–3 — инструменты и агент
 ```bash
 pip install -r requirements.txt
-cp .env.example .env          # Windows: copy .env.example .env
-python tools.py               # быстрый тест инструментов без LLM
-jupyter notebook agent_demo.ipynb
 ```
-В `agent_demo.ipynb` поставь `LOAD_ADAPTER = True`, если обучил адаптер из части 1
-(иначе используется базовая модель — демо инструментов всё равно работает).
 
-## Ключевые понятия
-- **LoRA / PEFT** — обучаем не все веса, а маленькие низкоранговые добавки (`r=16`) в слои
-  attention/MLP; базовая модель заморожена. Обучается ~доли процента параметров.
-- **QLoRA** — LoRA поверх 4-битной (nf4) модели: влезает в один бесплатный GPU.
-- **LangChain `@tool`** — функция + описание + схема входа; по описанию агент решает, что вызвать.
-- **ReAct** — цикл *Reasoning + Acting*: модель пишет `Thought/Action/Action Input`, система
-  выполняет инструмент и возвращает `Observation`, пока не появится `Final Answer`.
+Быстрые offline-самопроверки (без моделей и без сети):
 
-## Инструменты (`tools.py`)
-| Tool | Назначение | Зависимости |
-|---|---|---|
-| `web_search` | свежая информация из интернета | DuckDuckGo (`ddgs`), без ключа |
-| `fact_check` | факты/справки из Wikipedia | REST API, без ключа |
-| `calculator` | безопасные вычисления | `numexpr` |
+```bash
+python ie_extractor.py     # тесты парсера JSON
+python evaluate.py         # тесты метрик P/R/F1
+python data_prep.py        # загрузит подвыборку CUAD (нужна сеть) и покажет gold
+```
 
-## Демо-сценарии (`agent_demo.ipynb`)
-1. **Математика** → `calculator`.
-2. **Проверка факта** («кто написал Войну и мир») → `fact_check`.
-3. **Свежие данные** (новости про Milvus 2.5) → `web_search`.
-4. **Многоступенчатое рассуждение** (высота Эвереста в метрах → перевод в футы) →
-   `fact_check` + `calculator`.
+Бенчмарк и demo (нужен рабочий inference, см. ниже):
 
-> Качество следования формату ReAct у модели 1.5B ограничено — возможны срывы формата.
-> Это ожидаемо для демонстрации; лечится дообучением под tool-use или моделью побольше.
+```bash
+python benchmark.py --models Qwen/Qwen2.5-0.5B-Instruct Qwen/Qwen2.5-1.5B-Instruct \
+                    --n-docs 20 --batch-sizes 1 4
+python app.py              # Gradio на http://127.0.0.1:7860
+```
+
+## ⚠️ Про железо и где запускать inference
+
+Локально NVIDIA GPU нет (только Intel HD 520), поэтому:
+
+* **`bitsandbytes` (4-bit квантование) требует CUDA** → сравнение 7B quantized vs full
+  вынесено в **Google Colab** (`Runtime → T4 GPU`), ноутбук [`colab_7b.ipynb`](colab_7b.ipynb).
+* Основной пайплайн рассчитан на **CPU + маленькие модели** (0.5B/1.5B).
+* **Важно:** на авторской Windows-машine текущая связка `transformers 5.x / tokenizers 0.22`
+  падает с access-violation уже при загрузке любого токенайзера — это баг окружения, не кода.
+  Логика, не требующая модели (парсинг, загрузка CUAD, метрики, подсветка), полностью
+  работает и покрыта самопроверками. **Inference-ячейки надёжнее запускать в Google Colab**
+  (или после установки совместимой пары `transformers`/`tokenizers`).
+
+## Что протестировано локально
+
+* `ie_extractor.parse_entities` — 6 кейсов (чистый JSON, markdown-блок, болтовня вокруг,
+  строка вместо списка, битый JSON → regex-fallback, мусор) — ✅.
+* `evaluate` — нечёткий матчинг и арифметика TP/FP/FN — ✅.
+* `data_prep` — реальная загрузка CUAD (22 450 строк), сборка gold по ORG/DATE/CONTRACT_TYPE — ✅.
+* Импорты всех модулей и логика подсветки `app._to_highlighted` — ✅.
+* Сам inference моделей — проверяется в Colab (локально блокирован багом окружения, см. выше).
