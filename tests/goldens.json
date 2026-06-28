@@ -1,0 +1,95 @@
+{
+  "description": "Золотые примеры для оценки RAG-бота по базе знаний о Python (ДЗ-19). Поле ground_truth — эталонный ответ (reference) для метрики Context Recall и сверки фактов.",
+  "items": [
+    {
+      "id": "g01",
+      "question": "Кто создал язык Python и в каком году вышел первый релиз?",
+      "ground_truth": "Язык Python создал Гвидо ван Россум, первый публичный релиз вышел в феврале 1991 года.",
+      "expected_context_ids": ["history"]
+    },
+    {
+      "id": "g02",
+      "question": "В честь чего назван язык Python?",
+      "ground_truth": "Название отсылает к британскому комедийному шоу 'Monty Python's Flying Circus', а не к змее.",
+      "expected_context_ids": ["history"]
+    },
+    {
+      "id": "g03",
+      "question": "Когда в Python проверяются типы — во время выполнения или компиляции?",
+      "ground_truth": "Python использует динамическую строгую типизацию: типы проверяются во время выполнения, а не на этапе компиляции.",
+      "expected_context_ids": ["typing"]
+    },
+    {
+      "id": "g04",
+      "question": "Какой отступ и длину строки рекомендует PEP 8?",
+      "ground_truth": "PEP 8 рекомендует отступ в 4 пробела и ограничение длины строки в 79 символов.",
+      "expected_context_ids": ["pep8"]
+    },
+    {
+      "id": "g05",
+      "question": "Что такое GIL и как он влияет на потоки?",
+      "ground_truth": "GIL — это мьютекс в CPython, разрешающий исполнять байт-код только одному потоку одновременно, поэтому потоки не ускоряют CPU-bound задачи.",
+      "expected_context_ids": ["gil"]
+    },
+    {
+      "id": "g06",
+      "question": "Что такое pip и откуда он ставит пакеты?",
+      "ground_truth": "pip — стандартный менеджер пакетов Python, который устанавливает пакеты из репозитория PyPI.",
+      "expected_context_ids": ["pip"]
+    },
+    {
+      "id": "g07",
+      "question": "Какой командой создать виртуальное окружение и зачем оно нужно?",
+      "ground_truth": "Виртуальное окружение создаётся командой 'python -m venv .venv' и изолирует зависимости проекта от системного Python.",
+      "expected_context_ids": ["venv"]
+    },
+    {
+      "id": "g08",
+      "question": "Какие базовые встроенные коллекции есть в Python и какие из них изменяемы?",
+      "ground_truth": "Базовые коллекции: list, tuple, dict, set. Списки и словари (а также множества) изменяемы, а кортежи — нет.",
+      "expected_context_ids": ["datastructures"]
+    },
+    {
+      "id": "g09",
+      "question": "Что такое list comprehension?",
+      "ground_truth": "List comprehension — компактный синтаксис создания списка из итерируемого объекта, например [x*x for x in range(10) if x % 2 == 0].",
+      "expected_context_ids": ["comprehensions"]
+    },
+    {
+      "id": "g10",
+      "question": "Какая реализация интерпретатора Python является эталонной?",
+      "ground_truth": "Эталонная и самая распространённая реализация — CPython, написанная на C. Существуют альтернативы: PyPy, Jython, IronPython.",
+      "expected_context_ids": ["cpython"]
+    },
+    {
+      "id": "g11",
+      "question": "Как в asyncio объявляются сопрограммы и для каких задач он эффективен?",
+      "ground_truth": "Сопрограммы объявляются через 'async def', ожидание результата — через 'await'. asyncio эффективен для I/O-bound задач.",
+      "expected_context_ids": ["asyncio"]
+    },
+    {
+      "id": "g12",
+      "question": "Что такое 'The Zen of Python' и как его посмотреть?",
+      "ground_truth": "Это PEP 20 — набор принципов дизайна языка ('Явное лучше неявного' и др.), его можно увидеть командой 'import this'.",
+      "expected_context_ids": ["zen"]
+    },
+    {
+      "id": "g13",
+      "question": "Когда официально прекратилась поддержка Python 2?",
+      "ground_truth": "Поддержка Python 2 официально прекращена 1 января 2020 года.",
+      "expected_context_ids": ["py2eol"]
+    },
+    {
+      "id": "g14",
+      "question": "Что такое NumPy и за счёт чего он быстрый?",
+      "ground_truth": "NumPy — библиотека научных вычислений с массивом ndarray; операции векторизованы и выполняются в скомпилированном C-коде, что быстрее обычных циклов Python.",
+      "expected_context_ids": ["numpy"]
+    },
+    {
+      "id": "g15",
+      "question": "Какие основные структуры данных предоставляет pandas?",
+      "ground_truth": "pandas предоставляет Series (одномерный массив с метками) и DataFrame (двумерная таблица); библиотека построена поверх NumPy.",
+      "expected_context_ids": ["pandas"]
+    }
+  ]
+}

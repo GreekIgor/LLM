@@ -1,0 +1,84 @@
+name: Ragas CI (ДЗ-19)
+
+# CI с quality gates: пайплайн падает, если метрики Ragas ниже порогов.
+# Два уровня проверки:
+#   1) unit-gate   — всегда: юнит-тесты ретривера + quality gate по закоммиченному
+#                    ragas_results.json (детерминированно, без API-ключа).
+#   2) live-eval   — опционально: живой прогон Ragas через OpenRouter, если в секретах
+#                    репозитория задан OPENROUTER_API_KEY. Свежий артефакт публикуется.
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # --- Шаг 1: быстрые тесты + quality gate по сохранённому артефакту ---
+  unit-and-gate:
+    name: Unit tests + quality gate (artifact)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest (unit + quality gates)
+        # Падает, если средние метрики в ragas_results.json ниже порогов thresholds.json.
+        run: pytest -v
+
+      - name: Upload Ragas report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ragas-report
+          path: |
+            ragas_results.json
+            ragas_report.html
+          if-no-files-found: warn
+
+  # --- Шаг 2: живой прогон Ragas (только если задан секрет) ---
+  live-eval:
+    name: Live Ragas evaluation (OpenRouter)
+    runs-on: ubuntu-latest
+    needs: unit-and-gate
+    # Запускаем, только если в репозитории настроен секрет OPENROUTER_API_KEY.
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      RAGAS_LIVE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run live Ragas evaluation (quality gate)
+        # ragas_eval.py возвращает ненулевой код выхода, если гейты не пройдены -> job падает.
+        run: python ragas_eval.py
+
+      - name: Upload fresh Ragas report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ragas-report-live
+          path: |
+            ragas_results.json
+            ragas_report.html

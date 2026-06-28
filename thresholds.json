@@ -1,0 +1,6 @@
+{
+  "_comment": "Минимальные пороги по средним метрикам Ragas (quality gates). Используются и в ragas_eval.py, и в pytest. Если средняя метрика ниже порога — CI падает.",
+  "faithfulness": 0.70,
+  "answer_relevancy": 0.70,
+  "context_recall": 0.70
+}

@@ -1,6 +1,26 @@
-# LLM-приложение: суммаризатор документов с мониторингом Langfuse
-openai>=1.40.0
-langfuse>=3.0.0
-python-dotenv>=1.0.0
-tiktoken>=0.7.0
-pypdf>=4.0.0
+# ДЗ-19: CI/CD-пайплайн с автотестами и проверкой на галлюцинации (Ragas)
+# Версии зафиксированы для воспроизводимости в CI.
+
+# --- Оценка качества LLM ---
+ragas==0.2.10
+datasets==3.2.0
+
+# --- LLM-провайдер (OpenRouter, OpenAI-совместимый API) и обёртки LangChain для Ragas ---
+openai==1.59.6
+langchain-openai==0.2.14
+langchain-core==0.3.29
+
+# --- Эмбеддинги для Answer Relevance: fastembed (ONNX, без torch — не падает на Windows) ---
+fastembed==0.5.1
+langchain-community==0.3.14
+
+# --- RAG-ретривер (лёгкий, детерминированный, CPU) ---
+scikit-learn==1.6.1
+numpy==2.2.1
+
+# --- transformers требуется заданием (используется внутри datasets/ragas-токенизации) ---
+transformers==4.48.0
+
+# --- Тесты и конфиг ---
+pytest==8.3.4
+python-dotenv==1.0.1

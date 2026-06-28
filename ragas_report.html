@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<title>Ragas отчёт — ДЗ-19</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Arial, sans-serif; margin: 24px; color:#1a1a1a; }
+  h1 { font-size: 22px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 28px; font-size: 14px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+  th { background: #f4f4f4; }
+  td.good { background: #e6f6e6; color:#0a6b0a; font-weight:600; }
+  td.bad { background: #fdeaea; color:#b00020; font-weight:600; }
+  td.na { color:#888; }
+  td.q { max-width: 320px; }
+  .gate { font-size: 18px; font-weight: 700; }
+  .good { color:#0a6b0a; } .bad { color:#b00020; }
+  .meta { color:#666; font-size: 13px; }
+</style></head><body>
+<h1>Отчёт Ragas: оценка RAG-бота (ДЗ-19)</h1>
+<p class="meta">Сгенерировано: 2026-06-28T11:33:11.066537+00:00 &middot; примеров: 15</p>
+<p class="gate">Quality gate: <span class="good">ПРОЙДЕН</span></p>
+
+<h2>Сводка по метрикам</h2>
+<table>
+  <tr><th>Метрика</th><th>Среднее</th><th>Порог</th><th>Статус</th></tr>
+  <tr><td>faithfulness</td><td>1.000</td><td>0.7</td><td class='good'>PASS</td></tr><tr><td>answer_relevancy</td><td>0.759</td><td>0.7</td><td class='good'>PASS</td></tr><tr><td>context_recall</td><td>1.000</td><td>0.7</td><td class='good'>PASS</td></tr>
+</table>
+
+<h2>Подробно по примерам</h2>
+<table>
+  <tr><th>Вопрос</th><th>Ответ модели</th><th>Faithfulness</th><th>Answer&nbsp;Relevance</th><th>Context&nbsp;Recall</th></tr>
+  <tr><td class='q'>Кто создал язык Python и в каком году вышел первый релиз?</td><td>Язык программирования Python создал Гвидо ван Россум. Первый публичный релиз Python 0.9.0 состоялся в феврале 1991 года.</td><td class="good">1.000</td><td class="bad">0.694</td><td class="good">1.000</td></tr><tr><td class='q'>В честь чего назван язык Python?</td><td>Язык Python назван в честь британского комедийного шоу 'Monty Python's Flying Circus'.</td><td class="good">1.000</td><td class="good">0.911</td><td class="good">1.000</td></tr><tr><td class='q'>Когда в Python проверяются типы — во время выполнения или компиляции?</td><td>Типы в Python проверяются во время выполнения.</td><td class="good">1.000</td><td class="good">0.943</td><td class="good">1.000</td></tr><tr><td class='q'>Какой отступ и длину строки рекомендует PEP 8?</td><td>PEP 8 рекомендует отступ в 4 пробела и ограничение длины строки 79 символов.</td><td class="good">1.000</td><td class="bad">0.687</td><td class="good">1.000</td></tr><tr><td class='q'>Что такое GIL и как он влияет на потоки?</td><td>GIL (Global Interpreter Lock) — это мьютекс в CPython, который позволяет исполнять байт-код Python только одному потоку одновременно. Из-за GIL потоки не дают ускорения на CPU-bound задачах, поэтому для параллелизма по CPU используют процессы (модуль multiprocessing).</td><td class="good">1.000</td><td class="bad">0.578</td><td class="good">1.000</td></tr><tr><td class='q'>Что такое pip и откуда он ставит пакеты?</td><td>pip — стандартный менеджер пакетов Python, который устанавливает пакеты из репозитория PyPI (Python Package Index).</td><td class="good">1.000</td><td class="good">0.769</td><td class="good">1.000</td></tr><tr><td class='q'>Какой командой создать виртуальное окружение и зачем оно нужно?</td><td>Виртуальное окружение создаётся командой 'python -m venv .venv'. Оно нужно для изоляции зависимостей проекта от системного Python, что позволяет разным проектам использовать разные версии одних и тех же пакетов.</td><td class="good">1.000</td><td class="good">0.769</td><td class="good">1.000</td></tr><tr><td class='q'>Какие базовые встроенные коллекции есть в Python и какие из них изменяемы?</td><td>Базовые встроенные коллекции в Python: list, tuple, dict и set. Изменяемыми являются списки (list) и словари (dict). Кортежи (tuple) неизменяемы.</td><td class="good">1.000</td><td class="bad">0.651</td><td class="good">1.000</td></tr><tr><td class='q'>Что такое list comprehension?</td><td>List comprehension — компактный синтаксис создания списка из итерируемого объекта, например [x*x for x in range(10) if x % 2 == 0].</td><td class="good">1.000</td><td class="good">0.851</td><td class="good">1.000</td></tr><tr><td class='q'>Какая реализация интерпретатора Python является эталонной?</td><td>Эталонной реализацией интерпретатора Python является CPython.</td><td class="good">1.000</td><td class="bad">0.694</td><td class="good">1.000</td></tr><tr><td class='q'>Как в asyncio объявляются сопрограммы и для каких задач он эффективен?</td><td>Сопрограммы в asyncio объявляются через 'async def', а он эффективен для I/O-bound задач.</td><td class="good">1.000</td><td class="bad">0.694</td><td class="good">1.000</td></tr><tr><td class='q'>Что такое 'The Zen of Python' и как его посмотреть?</td><td>'The Zen of Python' — это PEP 20, формулирующий принципы дизайна языка Python, такие как 'Явное лучше неявного', 'Простое лучше сложного', 'Читаемость важна'. Текст можно увидеть, выполнив 'import this'.</td><td class="good">1.000</td><td class="good">0.864</td><td class="good">1.000</td></tr><tr><td class='q'>Когда официально прекратилась поддержка Python 2?</td><td>Официально поддержка Python 2 прекратилась 1 января 2020 года.</td><td class="good">1.000</td><td class="good">0.781</td><td class="good">1.000</td></tr><tr><td class='q'>Что такое NumPy и за счёт чего он быстрый?</td><td>NumPy — библиотека для научных вычислений, ядро которой — многомерный массив ndarray. Он быстрый за счёт векторизованных операций над массивами, которые выполняются в скомпилированном коде на C.</td><td class="good">1.000</td><td class="good">0.755</td><td class="good">1.000</td></tr><tr><td class='q'>Какие основные структуры данных предоставляет pandas?</td><td>Основные структуры данных, которые предоставляет pandas, — это Series (одномерный массив с метками) и DataFrame (двумерная таблица).</td><td class="good">1.000</td><td class="good">0.746</td><td class="good">1.000</td></tr>
+</table>
+</body></html>
