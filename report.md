@@ -9,7 +9,7 @@
 Цель — выбрать модель под **фактологический QA** и понять, какие метрики качества
 наиболее информативны для этой задачи.
 
-- **Датасет:** `sberbank-ai/sberquad` (русская версия SQuAD), срез 80 примеров
+- **Датасет:** `kuznetsoffandrey/sberquad` (русская версия SQuAD), срез 80 примеров
   валидационного сплита, seed=42.
 - **Модели (OpenRouter, free):** Llama-3.3-70B, Gemini-2.0-flash-exp, Qwen-2.5-72B.
 - **Метрики:** Exact Match, token-F1, BLEU, Semantic Similarity, время генерации, длина.

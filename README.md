@@ -23,8 +23,9 @@
 
 ## Данные
 
-- **Источник:** [`sberbank-ai/sberquad`](https://huggingface.co/datasets/sberbank-ai/sberquad)
+- **Источник:** [`kuznetsoffandrey/sberquad`](https://huggingface.co/datasets/kuznetsoffandrey/sberquad)
   (Hugging Face) — русская версия SQuAD: контекст + вопрос + эталонный короткий ответ.
+  (Прежний путь `sberbank-ai/sberquad` больше не резолвится — организацию переименовали.)
 - **Срез:** 80 примеров из валидационного сплита (seed=42), сохраняются в `qa_dataset.jsonl`.
 
 ## Модели (OpenRouter, free)
