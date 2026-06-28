@@ -1,6 +1,6 @@
 # ДЗ-12: LLM-приложение — суммаризатор документов с мониторингом Langfuse
 
-Суммаризатор документов на **OpenAI GPT** с полным циклом наблюдаемости через **Langfuse**.
+Суммаризатор документов на **OpenRouter** (OpenAI-совместимый API) с полным циклом наблюдаемости через **Langfuse**.
 Реализация — Jupyter notebook [`hw12.ipynb`](hw12.ipynb).
 
 ## Что делает
@@ -18,7 +18,7 @@
 |---|---|
 | **Trace** | один вызов `summarize_document()` |
 | **Span** | функции под `@observe()` (`summarize_chunk`, `reduce_summaries`) |
-| **Generation** | авто-логирование вызовов LLM через `from langfuse.openai import openai` |
+| **Generation** | авто-логирование вызовов LLM через `from langfuse.openai import OpenAI` (клиент направлен на OpenRouter) |
 | **Event** | `create_event`: `document-loaded`, `map-stage-complete`, `llm-call-failed` (ERROR) |
 | **Score** | `create_score`: `manual-quality` + авто-метрика `compression-ratio` |
 
@@ -45,7 +45,7 @@ jupyter notebook hw12.ipynb       # либо открыть в VS Code
 ## Ключи (`.env`)
 | Переменная | Откуда взять |
 |---|---|
-| `OPENAI_API_KEY` | platform.openai.com |
+| `OPENROUTER_API_KEY` | openrouter.ai/keys (есть бесплатные модели) |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | Langfuse → Project Settings |
 | `LANGFUSE_HOST` | `https://cloud.langfuse.com` (EU) или `https://us.cloud.langfuse.com` (US) |
 
