@@ -1,0 +1,4 @@
+model,EM,F1,BLEU,SemSim,Latency_s,PredLen
+google/gemini-2.5-flash-lite,0.575,0.768,59.733,0.912,0.544,25.838
+openai/gpt-4.1-nano,0.462,0.645,46.434,0.84,1.033,18.175
+anthropic/claude-3-haiku,0.412,0.601,42.293,0.82,0.754,17.988
