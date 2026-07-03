@@ -1,7 +1,9 @@
-# ДЗ-14: RAG-система с поиском по собственной базе документов (Milvus + OpenAI)
+# ДЗ-14: RAG-система с поиском по собственной базе документов (Milvus + OpenRouter)
 
-Векторный поиск для **RAG** на векторной БД **Milvus** (в Docker). Эмбеддинги — **OpenAI**
-`text-embedding-3-small`. Реализация — Jupyter-ноутбук [`hw14.ipynb`](hw14.ipynb).
+Векторный поиск для **RAG** на векторной БД **Milvus** (в Docker). LLM-провайдер — **OpenRouter**
+(OpenAI-совместимый API): эмбеддинги `openai/text-embedding-3-small`, генерация ответа
+`openai/gpt-4o-mini` — обе модели платные, но недорогие (без наценки OpenRouter к цене OpenAI).
+Реализация — Jupyter-ноутбук [`hw14.ipynb`](hw14.ipynb).
 
 ## Почему Milvus
 Из рассмотренных вариантов (Pinecone / Chroma / Milvus / ClickHouse) только Milvus даёт в одном
@@ -17,7 +19,7 @@
 **Часть 1 — настройка и индексация**
 - ✅ векторная БД Milvus поднята в Docker (`docker-compose.yml`);
 - ✅ собственный датасет с метаданными (`documents.json`);
-- ✅ эмбеддинги через OpenAI + индексация;
+- ✅ эмбеддинги через OpenRouter + индексация;
 - ✅ оптимальная схема коллекции (векторное поле + скалярные для фильтров);
 
 **Изучение ANN-алгоритмов**
@@ -39,10 +41,10 @@
 docker compose up -d
 docker compose ps                 # дождись статуса healthy у milvus-standalone (~30-60 сек)
 
-# 2. Python-окружение и ключ OpenAI
+# 2. Python-окружение и ключ OpenRouter
 pip install -r requirements.txt
 copy .env.example .env            # Windows;  Linux/macOS: cp .env.example .env
-#  -> впиши OPENAI_API_KEY в .env
+#  -> впиши OPENROUTER_API_KEY в .env (получить на https://openrouter.ai/keys)
 
 # 3. Открыть ноутбук
 jupyter notebook hw14.ipynb       # либо открыть в VS Code и выполнить ячейки сверху вниз
@@ -57,8 +59,8 @@ docker compose down -v            # + удалить тома (volumes/) с да
 ## Что такое эмбеддинги (кратко)
 Эмбеддинг — представление текста плотным вектором фиксированной длины; семантически близкие
 тексты дают близкие векторы (по косинусу). Варианты:
-- **OpenAI**: `text-embedding-3-small` (dim 1536, дёшево — используем его),
-  `text-embedding-3-large` (dim 3072, точнее), `text-embedding-ada-002` (легаси).
+- **OpenRouter / OpenAI**: `openai/text-embedding-3-small` (dim 1536, дёшево — используем его),
+  `openai/text-embedding-3-large` (dim 3072, точнее), `openai/text-embedding-ada-002` (легаси).
 - **Локальные** (через `sentence-transformers`, бесплатно): `all-MiniLM-L6-v2` (dim 384, быстрый),
   `BAAI/bge-m3`, `intfloat/e5-large` (топ-качество, мультиязычность).
 
