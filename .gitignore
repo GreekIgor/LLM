@@ -1,0 +1,13 @@
+# Секреты
+.env
+.env.local
+
+# Python / Jupyter
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Мусор
+1.0.0
