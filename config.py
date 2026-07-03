@@ -24,11 +24,13 @@ load_dotenv()
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 
 # Модель-генератор (отвечает на вопросы в RAG) и модель-судья (оценивает метрики).
-# Их можно развести: судье полезна модель посильнее. По умолчанию — одна и та же.
-# ВАЖНО: бесплатные `:free`-модели часто отдают 429 и быстро устаревают.
-# Для стабильного прогона в CI лучше задать недорогую платную модель.
+# РАЗВЕДЕНЫ НАМЕРЕННО: генератор делает много вызовов, поэтому берём дешёвую и быструю
+# модель; судья считает Faithfulness/Context Recall — от его «ума» напрямую зависит
+# ДОСТОВЕРНОСТЬ метрик, поэтому по умолчанию ставим модель посильнее (дороже, но вызовов
+# на порядок меньше). Обе легко переопределить через .env.
+# ВАЖНО: бесплатные `:free`-модели часто отдают 429 и быстро устаревают — используем платные.
 GEN_MODEL = os.getenv("RAGAS_GEN_MODEL", "openai/gpt-4o-mini")
-JUDGE_MODEL = os.getenv("RAGAS_JUDGE_MODEL", GEN_MODEL)
+JUDGE_MODEL = os.getenv("RAGAS_JUDGE_MODEL", "openai/gpt-4o")
 
 # Лёгкая ONNX-модель эмбеддингов (fastembed) — не тянет torch, работает в CI и на Windows.
 EMBED_MODEL = os.getenv("RAGAS_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
