@@ -25,9 +25,11 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -206,8 +208,8 @@ class Extractor:
     импортировать и использовать parse_entities() без установленного torch."""
 
     model_name: str = "Qwen/Qwen2.5-1.5B-Instruct"
-    device: str = "cpu"
-    dtype: str = "float32"          # на CPU bf16/fp16 обычно медленнее или не поддержаны
+    device: str = "auto"            # auto → cuda если доступна, иначе cpu
+    dtype: str = "auto"             # auto → float16 на GPU, float32 на CPU
     max_new_tokens: int = 512
     few_shot: bool = True
     max_input_tokens: int = 2048    # обрезаем длинные контракты, чтобы влезть в контекст/память
@@ -219,6 +221,13 @@ class Extractor:
     def load(self) -> "Extractor":
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        # авто-выбор железа: локальный GPU (если есть) в разы быстрее CPU
+        if self.device == "auto":
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if self.dtype == "auto":
+            # fp16 на GPU экономит VRAM и ускоряет; на CPU надёжнее fp32
+            self.dtype = "float16" if self.device.startswith("cuda") else "float32"
 
         dtype_map = {"float32": torch.float32, "float16": torch.float16, "bfloat16": torch.bfloat16}
         torch_dtype = dtype_map.get(self.dtype, torch.float32)
@@ -232,10 +241,8 @@ class Extractor:
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
             torch_dtype=torch_dtype,
-            device_map=self.device if self.device != "cpu" else None,
         )
-        if self.device == "cpu":
-            self.model = self.model.to("cpu")
+        self.model.to(self.device)
         self.model.eval()
         return self
 
@@ -330,6 +337,154 @@ class Extractor:
             "docs_per_sec": (len(texts) / dt) if dt > 0 else 0.0,
         }
         return results, stats
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Обёртка над OpenAI-совместимым API (OpenRouter / LM Studio)
+# ─────────────────────────────────────────────────────────────────────────────
+@dataclass
+class ApiExtractor:
+    """Извлечение через удалённый (или локальный) OpenAI-совместимый эндпоинт.
+
+    Тот же интерфейс, что и у `Extractor` (load / extract / extract_batch), но вместо
+    локальной генерации ходит в чат-API. Подходит для:
+        • OpenRouter — облачные модели, в т.ч. крупные 7B+/70B, которые не влезают в 5 ГБ
+          локальной видеокарты;
+        • LM Studio  — локальный сервер с тем же протоколом (base_url на localhost).
+
+    Пример:
+        ext = ApiExtractor(model_name="meta-llama/llama-3.1-8b-instruct").load()
+        ext.extract("This NDA is between Acme Corp and Bob ...")
+    """
+
+    model_name: str = "meta-llama/llama-3.1-8b-instruct"
+    api_key: str | None = None
+    base_url: str = "https://openrouter.ai/api/v1"
+    max_new_tokens: int = 512
+    few_shot: bool = True
+    temperature: float = 0.0
+    request_timeout: float = 120.0
+
+    client: Any = field(default=None, repr=False)
+    # для единообразной отчётности в benchmark.py
+    device: str = "api"
+    dtype: str = "api"
+
+    def load(self) -> "ApiExtractor":
+        from openai import OpenAI
+
+        key = self.api_key or os.environ.get("OPENROUTER_API_KEY") or "not-needed"
+        self.client = OpenAI(base_url=self.base_url, api_key=key, timeout=self.request_timeout)
+        return self
+
+    def _ensure_loaded(self) -> None:
+        if self.client is None:
+            raise RuntimeError("Клиент не создан — вызови .load() перед extract().")
+
+    def extract(self, text: str) -> dict[str, list[str]]:
+        return self.extract_with_stats(text)[0]
+
+    def extract_with_stats(self, text: str) -> tuple[dict[str, list[str]], dict[str, float]]:
+        self._ensure_loaded()
+        messages = build_messages(text, few_shot=self.few_shot)
+        t0 = time.perf_counter()
+        resp = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=messages,
+            temperature=self.temperature,
+            max_tokens=self.max_new_tokens,
+        )
+        dt = time.perf_counter() - t0
+        content = resp.choices[0].message.content or ""
+        gen_tokens = int(getattr(resp.usage, "completion_tokens", 0) or 0)
+        stats = {
+            "gen_tokens": gen_tokens,
+            "seconds": dt,
+            "tokens_per_sec": (gen_tokens / dt) if dt > 0 else 0.0,
+        }
+        return parse_entities(content), stats
+
+    def extract_batch(
+        self, texts: list[str], batch_size: int = 4
+    ) -> tuple[list[dict[str, list[str]]], dict[str, float]]:
+        """Последовательные вызовы API (batch_size не влияет — здесь он для совместимости
+        интерфейса с локальным Extractor). При сбое одного документа не падаем всей пачкой."""
+        self._ensure_loaded()
+        results: list[dict[str, list[str]]] = []
+        total_new_tokens = 0
+        t0 = time.perf_counter()
+        for text in texts:
+            try:
+                res, st = self.extract_with_stats(text)
+                total_new_tokens += int(st["gen_tokens"])
+            except Exception as e:  # noqa: BLE001 — сеть/лимиты не должны ронять прогон
+                print(f"    (API-ошибка на документе, пропускаю: {e})")
+                res = {t: [] for t in ENTITY_TYPES}
+            results.append(res)
+        dt = time.perf_counter() - t0
+        stats = {
+            "n_docs": len(texts),
+            "batch_size": batch_size,
+            "seconds": dt,
+            "gen_tokens": total_new_tokens,
+            "tokens_per_sec": (total_new_tokens / dt) if dt > 0 else 0.0,
+            "docs_per_sec": (len(texts) / dt) if dt > 0 else 0.0,
+        }
+        return results, stats
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Загрузка .env и выбор провайдера
+# ─────────────────────────────────────────────────────────────────────────────
+def load_dotenv(path: str | os.PathLike = ".env") -> None:
+    """Минимальный загрузчик .env без внешних зависимостей.
+
+    Не перезатирает уже выставленные переменные окружения (os.environ имеет приоритет)."""
+    p = Path(path)
+    if not p.exists():
+        return
+    for line in p.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        if key:
+            os.environ.setdefault(key, val)
+
+
+def make_extractor(provider: str | None = None, **overrides: Any):
+    """Фабрика: собирает нужную обёртку по LLM_PROVIDER (из .env / окружения).
+
+        provider="local"      → Extractor      (локальная HF-модель, авто-GPU/CPU)
+        provider="openrouter" → ApiExtractor    (облако OpenRouter)
+        provider="lmstudio"   → ApiExtractor    (локальный OpenAI-совместимый сервер)
+
+    Любой из параметров классов можно переопределить через **overrides (например model_name)."""
+    load_dotenv()
+    provider = (provider or os.environ.get("LLM_PROVIDER") or "local").strip().lower()
+
+    if provider == "openrouter":
+        params: dict[str, Any] = {
+            "model_name": os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct"),
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": os.environ.get("OPENROUTER_API_KEY"),
+        }
+        params.update(overrides)
+        return ApiExtractor(**params)
+
+    if provider == "lmstudio":
+        params = {
+            "model_name": os.environ.get("LMSTUDIO_MODEL", "google/gemma-3-4b"),
+            "base_url": os.environ.get("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
+            "api_key": "lm-studio",  # LM Studio ключ не проверяет
+        }
+        params.update(overrides)
+        return ApiExtractor(**params)
+
+    # local (по умолчанию)
+    return Extractor(**overrides)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

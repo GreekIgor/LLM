@@ -175,8 +175,9 @@ def benchmark_model(
 def main() -> None:
     ap = argparse.ArgumentParser(description="Бенчмарк извлечения сущностей из CUAD.")
     ap.add_argument("--models", nargs="+", default=["Qwen/Qwen2.5-1.5B-Instruct"])
-    ap.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
-    ap.add_argument("--dtype", default="float32", choices=["float32", "float16", "bfloat16"])
+    ap.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
+    ap.add_argument("--dtype", default="auto",
+                    choices=["auto", "float32", "float16", "bfloat16"])
     ap.add_argument("--n-docs", type=int, default=10, help="размер подвыборки CUAD")
     ap.add_argument("--max-chars", type=int, default=2500, help="обрезка текста контракта")
     ap.add_argument("--batch-sizes", nargs="+", type=int, default=[1])

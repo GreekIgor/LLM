@@ -62,26 +62,37 @@ python evaluate.py         # тесты метрик P/R/F1
 python data_prep.py        # загрузит подвыборку CUAD (нужна сеть) и покажет gold
 ```
 
-Бенчмарк и demo (нужен рабочий inference, см. ниже):
+Бенчмарк и demo (устройство выбирается автоматически, см. ниже):
 
 ```bash
 python benchmark.py --models Qwen/Qwen2.5-0.5B-Instruct Qwen/Qwen2.5-1.5B-Instruct \
-                    --n-docs 20 --batch-sizes 1 4
+                    --n-docs 20 --batch-sizes 1 4       # --device auto: GPU если доступна
 python app.py              # Gradio на http://127.0.0.1:7860
 ```
 
-## ⚠️ Про железо и где запускать inference
+## Про железо и где запускать inference
 
-Локально NVIDIA GPU нет (только Intel HD 520), поэтому:
+Способ inference выбирается через `LLM_PROVIDER` в `.env`.
+
+**1. Локально (`LLM_PROVIDER=local`, по умолчанию).** Доступна NVIDIA **Quadro P2000 (5 ГБ)**;
+`Extractor` сам определяет железо (`device="auto"`) — при наличии CUDA грузит модель на GPU в
+`float16`, иначе откатывается на CPU/`float32`. Маленькие Qwen2.5 (0.5B/1.5B) в 5 ГБ помещаются
+свободно.
+
+```bash
+python app.py                                           # авто-GPU
+python benchmark.py --device cuda --dtype float16 --batch-sizes 1 4 8
+```
+
+**2. Через API (`LLM_PROVIDER=openrouter`).** Крупные модели (7B+/70B), не влезающие в 5 ГБ
+видеокарты, гоняем через OpenRouter (OpenAI-совместимый API). Ключ — `OPENROUTER_API_KEY`, модель
+— `OPENROUTER_MODEL` в `.env`. Интерфейс тот же (`extract` / `extract_batch`), поэтому `app.py` и
+`benchmark.py` работают без изменений. Тот же путь подходит и для LM Studio (`LLM_PROVIDER=lmstudio`).
 
 * **`bitsandbytes` (4-bit квантование) требует CUDA** → сравнение 7B quantized vs full
   вынесено в **Google Colab** (`Runtime → T4 GPU`), ноутбук [`colab_7b.ipynb`](colab_7b.ipynb).
-* Основной пайплайн рассчитан на **CPU + маленькие модели** (0.5B/1.5B).
-* **Важно:** на авторской Windows-машine текущая связка `transformers 5.x / tokenizers 0.22`
-  падает с access-violation уже при загрузке любого токенайзера — это баг окружения, не кода.
-  Логика, не требующая модели (парсинг, загрузка CUAD, метрики, подсветка), полностью
-  работает и покрыта самопроверками. **Inference-ячейки надёжнее запускать в Google Colab**
-  (или после установки совместимой пары `transformers`/`tokenizers`).
+  На Windows `bitsandbytes` капризен, а 7B в полном fp16 (~14 ГБ) в 5 ГБ P2000 не помещается —
+  через OpenRouter 7B доступна и без Colab.
 
 ## Что протестировано локально
 
@@ -90,4 +101,5 @@ python app.py              # Gradio на http://127.0.0.1:7860
 * `evaluate` — нечёткий матчинг и арифметика TP/FP/FN — ✅.
 * `data_prep` — реальная загрузка CUAD (22 450 строк), сборка gold по ORG/DATE/CONTRACT_TYPE — ✅.
 * Импорты всех модулей и логика подсветки `app._to_highlighted` — ✅.
-* Сам inference моделей — проверяется в Colab (локально блокирован багом окружения, см. выше).
+* Локальный inference: `transformers 4.57` + токенайзер Qwen грузятся без ошибок; модель
+  выполняется на CPU и на GPU (Quadro P2000, CUDA доступна).

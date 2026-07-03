@@ -8,17 +8,19 @@ Demo-приложение: интерактивное извлечение су�
     (HighlightedText) + структурированный JSON, который можно скопировать в свою систему.
 
 Запуск:
-    python app.py                       # модель по умолчанию Qwen2.5-1.5B-Instruct (CPU)
-    IE_MODEL=Qwen/Qwen2.5-0.5B-Instruct python app.py   # быстрее, чуть хуже качество
+    python app.py                       # провайдер и модель берутся из .env (LLM_PROVIDER)
+    IE_MODEL=Qwen/Qwen2.5-0.5B-Instruct python app.py   # локально быстрее, чуть хуже качество
 
-Модель грузится один раз при старте (на CPU это десятки секунд; первое извлечение тоже
-небыстрое). Это нормально для локального CPU — для скорости используйте Colab/GPU.
+Провайдер выбирается через .env:
+    LLM_PROVIDER=local        → локальная HF-модель (авто-GPU, если есть; иначе CPU)
+    LLM_PROVIDER=openrouter   → облачная модель через OpenRouter
+Модель грузится один раз при старте.
 """
 from __future__ import annotations
 
 import os
 
-from ie_extractor import ENTITY_TYPES, Extractor
+from ie_extractor import ENTITY_TYPES, make_extractor
 
 MODEL_NAME = os.environ.get("IE_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
 
@@ -34,14 +36,18 @@ EXAMPLES = [
 ]
 
 # Ленивая инициализация — модель грузим при первом обращении.
-_extractor: Extractor | None = None
+_extractor = None
 
 
-def _get_extractor() -> Extractor:
+def _get_extractor():
     global _extractor
     if _extractor is None:
-        print(f"[app] загружаю модель {MODEL_NAME} (CPU) — подождите ...")
-        _extractor = Extractor(model_name=MODEL_NAME, device="cpu").load()
+        # для локального провайдера подставляем IE_MODEL; для openrouter/lmstudio
+        # модель берётся из .env, поэтому model_name не навязываем.
+        provider = (os.environ.get("LLM_PROVIDER") or "local").strip().lower()
+        overrides = {"model_name": MODEL_NAME} if provider == "local" else {}
+        print(f"[app] провайдер={provider}, загружаю модель — подождите ...")
+        _extractor = make_extractor(**overrides).load()
         print("[app] модель готова.")
     return _extractor
 
@@ -100,9 +106,11 @@ def build_ui():
     import gradio as gr
 
     with gr.Blocks(title="Contract Entity Extraction") as demo:
+        provider = (os.environ.get("LLM_PROVIDER") or "local").strip().lower()
+        model_label = MODEL_NAME if provider == "local" else f"провайдер {provider}"
         gr.Markdown(
             f"# 📄 Извлечение сущностей из контрактов\n"
-            f"Модель: **{MODEL_NAME}** (локально, CPU). Типы сущностей: "
+            f"Модель: **{model_label}**. Типы сущностей: "
             f"{', '.join(ENTITY_TYPES)}."
         )
         with gr.Row():
