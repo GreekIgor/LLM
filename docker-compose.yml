@@ -1,0 +1,68 @@
+# HW9: MLflow + Inference Service + Prometheus в Docker Compose.
+# vLLM запускается НАТИВНО на хосте (python start_vllm_server.py), контейнеры
+# ходят к нему через host.docker.internal:8000.
+#
+# Запуск:
+#   1) на хосте:  python start_vllm_server.py --model facebook/opt-1.3b --device cpu
+#   2) docker compose up --build
+
+services:
+  mlflow:
+    build:
+      context: .
+      dockerfile: mlflow.Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # vLLM крутится на хосте, не в compose
+      VLLM_BASE_URL: "http://host.docker.internal:8000"
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      MLFLOW_EXPERIMENT: "vllm-inference"
+      DEFAULT_MODEL: "facebook/opt-1.3b"
+      LOG_PROMPTS: "false"
+      PORT: "8080"
+      HOST: "0.0.0.0"
+    extra_hosts:
+      # чтобы host.docker.internal резолвился и на Linux (на Docker Desktop уже есть)
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - inference
+    restart: unless-stopped
+
+volumes:
+  mlflow-data:
+  prometheus-data:

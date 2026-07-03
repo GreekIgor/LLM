@@ -9,5 +9,12 @@ __pycache__/
 .ipynb_checkpoints/
 .pytest_cache/
 
+# Runtime-данные стенда Milvus/etcd/minio (не коммитим)
+volumes/
+
+# Локальные данные MLflow
+mlflow.db
+mlruns/
+
 # Мусор
 1.0.0

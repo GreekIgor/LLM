@@ -302,25 +302,27 @@ python benchmark_vllm_models.py
 - `best_model.txt` - имя лучшей модели
 - MLflow runs для каждой модели
 
-### start_all_services.sh / .ps1 - One-Command Setup
+### Запуск стека: vLLM (хост) + Docker Compose
 
-Автоматический запуск всех компонентов:
-- MLflow tracking server
-- vLLM server с загрузкой модели
-- FastAPI inference service
-- Автоматическое тестирование
+Стек разделён на две части:
+- **vLLM** — нативно на хосте (`start_vllm.sh` / `start_vllm.ps1`);
+- **MLflow + inference-сервис + Prometheus** — в Docker Compose (`docker-compose.yml`).
 
 **Использование:**
 
-Linux/Mac:
+Шаг 1 — vLLM на хосте:
 ```bash
-bash start_all_services.sh
+bash start_vllm.sh          # Linux/Mac
+.\start_vllm.ps1            # Windows
 ```
 
-Windows:
-```powershell
-.\start_all_services.ps1
+Шаг 2 — остальной стек в отдельном терминале:
+```bash
+docker compose up --build
 ```
+
+Inference-контейнер обращается к vLLM через `host.docker.internal:8000`.
+Подробнее — см. [QUICKSTART.md](QUICKSTART.md).
 
 ---
 

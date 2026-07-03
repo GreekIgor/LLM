@@ -1,0 +1,22 @@
+# Виртуальное окружение и кэши — не тащим в контекст сборки
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Данные Milvus/etcd/minio из другого стенда — очень тяжёлые
+volumes/
+
+# Датасеты и результаты прогонов
+*.csv
+mlruns/
+mlflow.db
+
+# Git и секреты
+.git/
+.env
+
+# Ноутбуки и доки не нужны в образе
+*.ipynb
+*.md

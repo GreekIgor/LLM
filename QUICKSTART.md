@@ -1,33 +1,49 @@
 # 🚀 Быстрый старт - HW9
 
-## 🎯 Самый быстрый способ (Рекомендуется!)
+## 🎯 Самый быстрый способ (Рекомендуется!) — Docker Compose
 
-### Автоматический запуск всех сервисов
+Стек состоит из двух частей:
+- **vLLM** — запускается нативно на хосте (ему нужен доступ к GPU/железу);
+- **MLflow + inference-сервис + Prometheus** — поднимаются в Docker Compose.
+
+### Шаг 1. Запустите vLLM на хосте
 
 **Windows (PowerShell):**
 ```powershell
-.\start_all_services.ps1
+.\start_vllm.ps1
 ```
 
 **Linux/Mac:**
 ```bash
-bash start_all_services.sh
+bash start_vllm.sh
 ```
 
-Скрипт автоматически:
-- ✅ Проверит/создаст виртуальное окружение
-- ✅ Установит все зависимости
-- ✅ Запустит MLflow tracking server
-- ✅ Запустит vLLM с загрузкой модели
-- ✅ Протестирует подключение
-- ✅ Запустит FastAPI inference service
+Скрипт создаст `.venv`, поставит зависимости и запустит vLLM на `http://localhost:8000`.
+Дождитесь сообщения `Uvicorn running on http://0.0.0.0:8000` (первая загрузка модели — 5-15 минут).
+
+Модель/устройство можно переопределить переменными окружения:
+```bash
+MODEL=facebook/opt-125m DEVICE=cpu bash start_vllm.sh
+```
+
+### Шаг 2. Поднимите остальной стек в Docker
+
+**В отдельном терминале:**
+```bash
+docker compose up --build
+```
+
+Compose запустит MLflow, inference-сервис и Prometheus, дождавшись healthcheck'ов.
+Inference-контейнер обращается к vLLM на хосте через `host.docker.internal:8000`.
 
 После запуска доступны:
 - 📊 MLflow UI: http://localhost:5000
-- 🤖 vLLM API: http://localhost:8000
+- 🤖 vLLM API: http://localhost:8000 (нативно на хосте)
 - 🌐 Inference Service: http://localhost:8080
 - 📖 API Docs: http://localhost:8080/docs
-- 📈 Metrics: http://localhost:8080/metrics
+- 📈 Prometheus: http://localhost:9090 (метрики inference-сервиса)
+
+**Остановка:** `Ctrl+C` в терминале с compose (или `docker compose down`), затем `Ctrl+C` в терминале с vLLM.
 
 ---
 
@@ -93,9 +109,16 @@ mlflow ui
 ```
 LLM/
 ├── hw9_vllm_mlflow.ipynb      # Основной ноутбук с заданием
-├── start_vllm_server.py       # Скрипт запуска сервера
+├── docker-compose.yml         # MLflow + inference + Prometheus
+├── Dockerfile                 # Образ inference-сервиса
+├── mlflow.Dockerfile          # Образ MLflow tracking server
+├── requirements_inference.txt # Зависимости для контейнера inference
+├── monitoring/prometheus.yml  # Конфиг Prometheus
+├── start_vllm.ps1 / .sh       # Запуск vLLM на хосте
+├── start_vllm_server.py       # Лаунчер vLLM (используется скриптами)
+├── inference_service.py       # FastAPI inference-сервис
 ├── test_vllm_server.py        # Скрипт тестирования
-├── requirements_hw9.txt       # Зависимости
+├── requirements_hw9.txt       # Полные зависимости (vllm, torch, jupyter)
 ├── HW9_README.md              # Подробная документация
 └── QUICKSTART.md              # Этот файл
 ```

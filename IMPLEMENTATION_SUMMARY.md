@@ -77,21 +77,20 @@ python benchmark_vllm_models.py
 
 ---
 
-### 3. **start_all_services.sh** - Bash Automation Script
-**Назначение:** Автоматический запуск всех сервисов (Linux/Mac)
+### 3. **start_vllm.sh / start_vllm.ps1** - Запуск vLLM на хосте
+**Назначение:** Готовит окружение и запускает только vLLM (Linux/Mac + Windows)
 
 **Что делает:**
 1. ✅ Проверяет/создаёт виртуальное окружение
 2. ✅ Устанавливает зависимости из requirements_hw9.txt
-3. ✅ Запускает MLflow tracking server (port 5000)
-4. ✅ Запускает vLLM server с заданной моделью (port 8000)
-5. ✅ Тестирует доступность сервисов
-6. ✅ Запускает FastAPI inference service (port 8080)
-7. ✅ Сохраняет PIDs процессов в .pids
+3. ✅ Запускает vLLM server с заданной моделью (port 8000) в текущем терминале
+
+MLflow (5000), inference-сервис (8080) и Prometheus (9090) вынесены в Docker Compose.
 
 **Использование:**
 ```bash
-bash start_all_services.sh
+bash start_vllm.sh          # Linux/Mac
+.\start_vllm.ps1            # Windows
 ```
 
 **Переменные окружения:**
@@ -100,18 +99,18 @@ bash start_all_services.sh
 
 ---
 
-### 4. **start_all_services.ps1** - PowerShell Automation Script
-**Назначение:** Автоматический запуск всех сервисов (Windows)
+### 4. **docker-compose.yml** - Оркестрация остального стека
+**Назначение:** Поднимает MLflow + inference-сервис + Prometheus одной командой
 
-**Аналогично bash версии, но:**
-- ✅ Использует PowerShell Jobs вместо background processes
-- ✅ Цветной вывод с помощью Write-Host
-- ✅ Graceful shutdown через Ctrl+C
-- ✅ Команды для управления: Get-Job, Stop-Job, Remove-Job
+**Состав:**
+- ✅ `mlflow` (port 5000) — tracking server, sqlite + serve-artifacts, том `mlflow-data`
+- ✅ `inference` (port 8080) — образ из `Dockerfile`, ходит к vLLM через `host.docker.internal:8000`
+- ✅ `prometheus` (port 9090) — скрейпит `inference:8080/metrics`
+- ✅ `depends_on` по healthcheck, named volumes для данных
 
 **Использование:**
-```powershell
-.\start_all_services.ps1
+```bash
+docker compose up --build
 ```
 
 ---
