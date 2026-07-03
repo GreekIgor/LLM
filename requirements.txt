@@ -2,18 +2,22 @@
 
 # ── Fine-tuning (нужен GPU/CUDA — обычно Google Colab T4) ────────────────────
 torch>=2.2.0
-transformers>=4.44.0
+# ВНИМАНИЕ: верхняя граница обязательна — transformers>=5.0 на импорте безусловно обращается
+# к torch.float8_e8m0fnu, которого нет в torch<2.7, и падает с ModuleNotFoundError на Qwen2ForCausalLM.
+transformers>=4.44.0,<5.0.0
 peft>=0.12.0            # LoRA / параметрически-эффективный fine-tuning
+# В trl>=1.0 параметр SFTConfig переименован: max_seq_length -> max_length (см. finetune_lora.ipynb)
 trl>=0.10.0            # SFTTrainer для supervised fine-tuning
 datasets>=2.20.0       # загрузка датасета (lmsys-chat-1m и др.)
 accelerate>=0.33.0
-bitsandbytes>=0.43.0   # 4-bit квантование (QLoRA). ВНИМАНИЕ: Linux/CUDA. На Windows локально не работает.
+bitsandbytes>=0.43.0   # 4-bit квантование (QLoRA), нужна CUDA. На Windows работает (проверено, есть готовые wheels).
 
 # ── Инструменты + агент (работают на CPU) ────────────────────────────────────
 langchain>=0.3.0
 langchain-community>=0.3.0
-langchain-huggingface>=0.1.0   # обёртка HF-модели в LangChain
+langchain-huggingface>=0.1.0   # обёртка HF-модели в LangChain (нужна только для LLM_PROVIDER=transformers)
 ddgs>=6.0.0                    # DuckDuckGo поиск (без API-ключа)
 numexpr>=2.10.0               # безопасный калькулятор
 requests>=2.31.0              # Wikipedia REST API
 python-dotenv>=1.0.0
+openai>=1.30.0                 # OpenAI-совместимый клиент для OpenRouter и LM Studio

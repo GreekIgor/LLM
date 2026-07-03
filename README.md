@@ -13,15 +13,26 @@
 | `requirements.txt`, `.env.example` | зависимости и ключи |
 
 ## ⚠️ Про железо
-Локально NVIDIA GPU нет (только Intel HD 520), а `bitsandbytes` (4-бит QLoRA) требует CUDA.
-Поэтому **`finetune_lora.ipynb` рассчитан на Google Colab** (Runtime → Change runtime type → **T4 GPU**)
-или другую машину с CUDA. `tools.py` и `agent_demo.ipynb` работают и на CPU (модель 1.5B медленно,
-но запускается; на GPU — быстро).
+`bitsandbytes` (4-бит QLoRA) требует CUDA. Если локальной NVIDIA GPU нет — **`finetune_lora.ipynb`
+рассчитан на Google Colab** (Runtime → Change runtime type → **T4 GPU**); это неизбежно: QLoRA
+обучает реальные веса модели, доступа к ним через внешний API нет.
+
+Если CUDA локально есть (проверено на Quadro P2000, 4 ГБ — QLoRA для 1.5B укладывается в ~2.4 ГБ
+пиковой VRAM), ноутбук отрабатывает и локально. Единственное условие — `transformers<5.0.0` (см.
+`requirements.txt`): более новые версии на импорте падают с `ModuleNotFoundError` на
+`Qwen2ForCausalLM`, потому что трогают `torch.float8_e8m0fnu`, которого нет в `torch<2.7`.
+
+`agent_demo.ipynb` (часть 2–3) от GPU не зависит: он переключается флагом `LLM_PROVIDER` между
+**OpenRouter** (облако, есть бесплатные модели), **LM Studio** (локальный сервер, модели
+`qwen/qwen3.5-9b` или `deepseek/deepseek-r1-0528-qwen3-8b`) и `transformers` (своя загрузка
+Qwen2.5-1.5B на CPU — исходный вариант, медленный и хуже держит формат ReAct). По умолчанию —
+`lmstudio`, см. `.env.example`.
 
 ## Запуск
 
-### Часть 1 — fine-tuning (в Colab)
-1. Открой `finetune_lora.ipynb` в Colab, включи GPU.
+### Часть 1 — fine-tuning (в Colab или локально с CUDA)
+1. Открой `finetune_lora.ipynb` в Colab (включи GPU) или локально — если `torch.cuda.is_available()`
+   даёт `True`, ставь зависимости из `requirements.txt` (`pip install -r requirements.txt`).
 2. Получи доступ к gated-датасету: прими условия на
    [lmsys/lmsys-chat-1m](https://huggingface.co/datasets/lmsys/lmsys-chat-1m) и задай `HF_TOKEN`.
    *(Нет доступа — ноутбук сам переключится на открытый `ultrachat_200k`.)*
@@ -35,8 +46,12 @@ cp .env.example .env          # Windows: copy .env.example .env
 python tools.py               # быстрый тест инструментов без LLM
 jupyter notebook agent_demo.ipynb
 ```
-В `agent_demo.ipynb` поставь `LOAD_ADAPTER = True`, если обучил адаптер из части 1
-(иначе используется базовая модель — демо инструментов всё равно работает).
+В `.env` задай `LLM_PROVIDER`:
+- `openrouter` — впиши `OPENROUTER_API_KEY` (https://openrouter.ai/keys);
+- `lmstudio` — запусти LM Studio (Developer → Start Server), загрузи модель, при необходимости
+  поправь `LMSTUDIO_MODEL`;
+- `transformers` — исходный вариант, своя загрузка HF-модели; поставь `LOAD_ADAPTER = True`
+  в ноутбуке, если обучил адаптер из части 1 (иначе используется базовая модель).
 
 ## Ключевые понятия
 - **LoRA / PEFT** — обучаем не все веса, а маленькие низкоранговые добавки (`r=16`) в слои
