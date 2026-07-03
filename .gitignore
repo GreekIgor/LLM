@@ -16,3 +16,6 @@ __pycache__/
 .pytest_cache/
 .env.local
 1.0.0
+
+# Локальные настройки Claude Code
+.claude/
