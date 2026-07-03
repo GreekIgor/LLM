@@ -5,3 +5,9 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Дополнительно
+.venv/
+.pytest_cache/
+.env.local
+1.0.0
