@@ -20,6 +20,7 @@ mlruns/
 benchmark_summary.json
 best_model.txt
 predictions_*.json
+eval_results.csv
 
 # Мусор
 1.0.0
