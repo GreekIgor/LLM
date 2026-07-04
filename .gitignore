@@ -16,5 +16,10 @@ volumes/
 mlflow.db
 mlruns/
 
+# Сгенерированные ноутбуком/бенчмарком артефакты
+benchmark_summary.json
+best_model.txt
+predictions_*.json
+
 # Мусор
 1.0.0

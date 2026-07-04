@@ -35,7 +35,7 @@ services:
       VLLM_API_KEY: "${OPENROUTER_API_KEY}"
       MLFLOW_TRACKING_URI: "http://mlflow:5000"
       MLFLOW_EXPERIMENT: "vllm-inference"
-      DEFAULT_MODEL: "meta-llama/llama-3.2-3b-instruct"
+      DEFAULT_MODEL: "qwen/qwen-2.5-7b-instruct"
       LOG_PROMPTS: "false"
       PORT: "8080"
       HOST: "0.0.0.0"

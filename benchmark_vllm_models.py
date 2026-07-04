@@ -123,8 +123,15 @@ def query_vllm(
     top_p: float = 0.9,
     timeout: int = 60
 ) -> Dict[str, Any]:
-    """Запрос к vLLM API"""
+    """Запрос к vLLM API (или любому OpenAI-совместимому бэкенду, напр. OpenRouter)"""
     try:
+        # Опциональная авторизация: для локального vLLM ключ не нужен,
+        # для облачных бэкендов (OpenRouter/OpenAI) берётся из VLLM_API_KEY.
+        headers = {}
+        api_key = os.getenv("VLLM_API_KEY", "")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
         response = requests.post(
             f"{base_url}/v1/completions",
             json={
@@ -134,6 +141,7 @@ def query_vllm(
                 "temperature": temperature,
                 "top_p": top_p,
             },
+            headers=headers,
             timeout=timeout
         )
         response.raise_for_status()
