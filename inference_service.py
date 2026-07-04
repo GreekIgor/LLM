@@ -78,6 +78,9 @@ app = FastAPI(
 
 # ===== Configuration =====
 VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://localhost:8000")
+# Опциональный API-ключ для OpenAI-совместимого бэкенда (OpenRouter, OpenAI и т.п.).
+# Для локального vLLM не нужен — оставьте пустым.
+VLLM_API_KEY = os.getenv("VLLM_API_KEY", "")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 MLFLOW_EXPERIMENT = os.getenv("MLFLOW_EXPERIMENT", "vllm-inference")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "facebook/opt-1.3b")
@@ -171,10 +174,17 @@ async def generate(req: GenerateRequest):
             
             if req.stop:
                 payload["stop"] = req.stop
-            
+
+            # Заголовок авторизации нужен для облачных бэкендов (OpenRouter/OpenAI);
+            # для локального vLLM VLLM_API_KEY пустой и заголовок не добавляется.
+            headers = {}
+            if VLLM_API_KEY:
+                headers["Authorization"] = f"Bearer {VLLM_API_KEY}"
+
             response = requests.post(
                 f"{VLLM_BASE_URL}/v1/completions",
                 json=payload,
+                headers=headers,
                 timeout=120
             )
             

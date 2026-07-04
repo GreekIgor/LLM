@@ -302,27 +302,23 @@ python benchmark_vllm_models.py
 - `best_model.txt` - имя лучшей модели
 - MLflow runs для каждой модели
 
-### Запуск стека: vLLM (хост) + Docker Compose
+### Запуск стека: Docker Compose (бэкенд — OpenRouter)
 
-Стек разделён на две части:
-- **vLLM** — нативно на хосте (`start_vllm.sh` / `start_vllm.ps1`);
-- **MLflow + inference-сервис + Prometheus** — в Docker Compose (`docker-compose.yml`).
+Весь стек (MLflow + inference-сервис + Prometheus) поднимается одной командой.
+Бэкенд инференса — **OpenRouter** (OpenAI-совместимый API) как замена локального vLLM:
+на GPU Pascal (P2000, SM 6.1 < требуемых 7.5) и под нативным Windows vLLM не запускается,
+а inference-сервис общается с бэкендом по стандартному `/v1/completions`.
 
 **Использование:**
 
-Шаг 1 — vLLM на хосте:
-```bash
-bash start_vllm.sh          # Linux/Mac
-.\start_vllm.ps1            # Windows
-```
-
-Шаг 2 — остальной стек в отдельном терминале:
+1. В `.env` должен быть `OPENROUTER_API_KEY=sk-or-v1-...` (подхватывается автоматически).
+2. Запуск:
 ```bash
 docker compose up --build
 ```
 
-Inference-контейнер обращается к vLLM через `host.docker.internal:8000`.
-Подробнее — см. [QUICKSTART.md](QUICKSTART.md).
+Модель задаётся в `DEFAULT_MODEL` сервиса `inference` (по умолчанию
+`meta-llama/llama-3.2-3b-instruct`). Подробнее — см. [QUICKSTART.md](QUICKSTART.md).
 
 ---
 

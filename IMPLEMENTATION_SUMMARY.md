@@ -77,36 +77,31 @@ python benchmark_vllm_models.py
 
 ---
 
-### 3. **start_vllm.sh / start_vllm.ps1** - Запуск vLLM на хосте
-**Назначение:** Готовит окружение и запускает только vLLM (Linux/Mac + Windows)
+### 3. **Бэкенд инференса — OpenRouter (замена vLLM)**
+**Назначение:** OpenAI-совместимый бэкенд вместо локального vLLM
 
-**Что делает:**
-1. ✅ Проверяет/создаёт виртуальное окружение
-2. ✅ Устанавливает зависимости из requirements_hw9.txt
-3. ✅ Запускает vLLM server с заданной моделью (port 8000) в текущем терминале
+Локальный vLLM недоступен на этом железе: он требует NVIDIA GPU с compute
+capability ≥ 7.5, а Quadro P2000 — 6.1 (Pascal); нативной сборки под Windows у vLLM нет.
+Inference-сервис общается с бэкендом по стандартному OpenAI-совместимому
+`/v1/completions`, поэтому OpenRouter подставляется как drop-in без изменения логики.
 
-MLflow (5000), inference-сервис (8080) и Prometheus (9090) вынесены в Docker Compose.
-
-**Использование:**
-```bash
-bash start_vllm.sh          # Linux/Mac
-.\start_vllm.ps1            # Windows
-```
-
-**Переменные окружения:**
-- `MODEL` - модель для vLLM (default: facebook/opt-1.3b)
-- `DEVICE` - устройство (auto/cpu/cuda)
+**Что потребовалось:**
+- В `inference_service.py` добавлен опциональный заголовок `Authorization: Bearer`
+  из переменной `VLLM_API_KEY` (для локального vLLM ключ не нужен).
+- `VLLM_BASE_URL=https://openrouter.ai/api`, ключ `OPENROUTER_API_KEY` из `.env`.
+- Модель по умолчанию — `meta-llama/llama-3.2-3b-instruct` (дёшево, ~$3e-6/запрос).
 
 ---
 
-### 4. **docker-compose.yml** - Оркестрация остального стека
+### 4. **docker-compose.yml** - Оркестрация всего стека
 **Назначение:** Поднимает MLflow + inference-сервис + Prometheus одной командой
 
 **Состав:**
-- ✅ `mlflow` (port 5000) — tracking server, sqlite + serve-artifacts, том `mlflow-data`
-- ✅ `inference` (port 8080) — образ из `Dockerfile`, ходит к vLLM через `host.docker.internal:8000`
+- ✅ `mlflow` (port 5000) — tracking server, sqlite + serve-artifacts, `--allowed-hosts=*`, том `mlflow-data`
+- ✅ `inference` (port 8080) — образ из `Dockerfile`, бэкенд OpenRouter (`VLLM_BASE_URL`)
 - ✅ `prometheus` (port 9090) — скрейпит `inference:8080/metrics`
 - ✅ `depends_on` по healthcheck, named volumes для данных
+- ✅ `OPENROUTER_API_KEY` подхватывается из `.env` через интерполяцию compose
 
 **Использование:**
 ```bash

@@ -1,10 +1,10 @@
 # HW9: MLflow + Inference Service + Prometheus в Docker Compose.
-# vLLM запускается НАТИВНО на хосте (python start_vllm_server.py), контейнеры
-# ходят к нему через host.docker.internal:8000.
+# Бэкенд инференса — OpenRouter (OpenAI-совместимый API) как замена vLLM:
+# локальный vLLM невозможен на этом железе (GPU Pascal SM 6.1 < требуемых 7.5).
+# Ключ OPENROUTER_API_KEY подхватывается из .env.
 #
 # Запуск:
-#   1) на хосте:  python start_vllm_server.py --model facebook/opt-1.3b --device cpu
-#   2) docker compose up --build
+#   docker compose up --build
 
 services:
   mlflow:
@@ -30,17 +30,15 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # vLLM крутится на хосте, не в compose
-      VLLM_BASE_URL: "http://host.docker.internal:8000"
+      # OpenRouter как OpenAI-совместимый бэкенд (inference добавит /v1/completions)
+      VLLM_BASE_URL: "https://openrouter.ai/api"
+      VLLM_API_KEY: "${OPENROUTER_API_KEY}"
       MLFLOW_TRACKING_URI: "http://mlflow:5000"
       MLFLOW_EXPERIMENT: "vllm-inference"
-      DEFAULT_MODEL: "facebook/opt-1.3b"
+      DEFAULT_MODEL: "meta-llama/llama-3.2-3b-instruct"
       LOG_PROMPTS: "false"
       PORT: "8080"
       HOST: "0.0.0.0"
-    extra_hosts:
-      # чтобы host.docker.internal резолвился и на Linux (на Docker Desktop уже есть)
-      - "host.docker.internal:host-gateway"
     depends_on:
       mlflow:
         condition: service_healthy
