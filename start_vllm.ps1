@@ -1,4 +1,4 @@
-# Запуск ТОЛЬКО vLLM сервера на хосте (Windows PowerShell).
+﻿# Запуск ТОЛЬКО vLLM сервера на хосте (Windows PowerShell).
 # MLflow, inference-сервис и Prometheus поднимаются через docker compose.
 #
 # Порядок работы:
