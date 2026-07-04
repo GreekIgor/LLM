@@ -32,11 +32,21 @@ Compose соберёт образы и запустит сервисы по heal
 
 ### Шаг 3. Проверьте генерацию
 
+**Linux/Mac/Git Bash:**
 ```bash
 curl -X POST http://localhost:8080/generate \
   -H "Content-Type: application/json" \
   -d '{"prompt":"The capital of France is","max_tokens":16,"temperature":0}'
 ```
+
+**Windows PowerShell** (в нём `curl` — это алиас `Invoke-WebRequest`, bash-синтаксис
+не работает; используйте `Invoke-RestMethod`):
+```powershell
+Invoke-RestMethod -Uri http://localhost:8080/generate -Method Post `
+  -ContentType 'application/json' `
+  -Body '{"prompt":"The capital of France is","max_tokens":16,"temperature":0}'
+```
+
 В ответе будут `output`, счётчики токенов и `latency_seconds`. Каждый запрос
 логируется в MLflow (эксперимент `vllm-inference`) и в метрики Prometheus.
 
@@ -104,9 +114,13 @@ LLM/
 # Поднять весь стек (MLflow + inference + Prometheus)
 docker compose up --build
 
-# Проверить генерацию
+# Проверить генерацию (Linux/Mac/Git Bash)
 curl -X POST http://localhost:8080/generate -H "Content-Type: application/json" \
   -d '{"prompt":"Hello, world!","max_tokens":32}'
+
+# Проверить генерацию (Windows PowerShell)
+Invoke-RestMethod -Uri http://localhost:8080/generate -Method Post `
+  -ContentType 'application/json' -Body '{"prompt":"Hello, world!","max_tokens":32}'
 
 # Открыть ноутбук с заданием
 jupyter notebook hw9_vllm_mlflow.ipynb
