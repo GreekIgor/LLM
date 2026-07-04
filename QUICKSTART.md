@@ -48,64 +48,32 @@ curl -X POST http://localhost:8080/generate \
 
 ---
 
-## 📋 Ручной запуск локального vLLM (опционально)
+## 📓 Работа с заданием (ноутбук)
 
-> ⚠️ **Требуется NVIDIA GPU с compute capability ≥ 7.5** (T4, RTX 20xx+, A100 и т.п.)
-> и Linux/WSL2. На Quadro P2000 (SM 6.1) и под нативным Windows этот путь не работает —
-> используйте Docker Compose с OpenRouter выше. Раздел оставлен для машин с подходящим GPU.
+1. Поднимите стек: `docker compose up --build` (см. выше).
+2. Откройте **hw9_vllm_mlflow.ipynb** и выполните ячейки по порядку.
+   Обращения к бэкенду идут через inference-сервис (`http://localhost:8080`) → OpenRouter.
+3. Результаты экспериментов смотрите в **MLflow UI**: http://localhost:5000
+   (эксперимент `vllm-inference`).
 
-## Шаг 1: Установка зависимостей (5 минут)
+---
 
-```bash
-pip install -r requirements_hw9.txt
+## ⛔ Про локальный vLLM (не работает на этой машине)
+
+Скрипты `start_vllm_server.py` / `test_vllm_server.py` запускают **нативный vLLM** и
+на данном железе всегда падают:
+
+```
+ModuleNotFoundError: No module named 'vllm._C_stable_libtorch'
 ```
 
-## Шаг 2: Запуск vLLM сервера (2-15 минут на загрузку модели)
+Причина принципиальная, `--device cpu` не помогает:
+- у vLLM **нет нативной сборки под Windows** (нет скомпилированного C-расширения);
+- vLLM требует NVIDIA GPU с **compute capability ≥ 7.5**, а Quadro P2000 — 6.1 (Pascal);
+- свежий Docker-образ vLLM собран под CUDA 13, которую не тянет установленный драйвер.
 
-### Вариант A: Лёгкая модель для CPU
-```bash
-python start_vllm_server.py --model facebook/opt-1.3b --device cpu
-```
-
-### Вариант B: Мощная модель для GPU
-```bash
-python start_vllm_server.py --model meta-llama/Meta-Llama-3-8B-Instruct
-```
-
-**Дождитесь сообщения:**
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000
-```
-
-## Шаг 3: Проверка работы (1 минута)
-
-**В новом терминале:**
-```bash
-python test_vllm_server.py
-```
-
-Ожидаемый результат:
-```
-✅ Сервер доступен и работает
-✅ Доступные модели: facebook/opt-1.3b
-✅ Генерация текста работает
-✅ OpenAI совместимость OK
-```
-
-## Шаг 4: Выполнение задания (30-60 минут)
-
-1. Откройте **hw9_vllm_mlflow.ipynb**
-2. Выполните все ячейки по порядку
-3. Изучите результаты
-
-## Шаг 5: Просмотр результатов в MLflow (5 минут)
-
-**В новом терминале:**
-```bash
-mlflow ui
-```
-
-Откройте в браузере: http://localhost:5000
+Поэтому бэкендом служит OpenRouter (см. основной раздел). Локальный vLLM возможен
+только на машине с поддерживаемым GPU (T4 / RTX 20xx+ / A100 …) под Linux/WSL2.
 
 ---
 
@@ -132,58 +100,52 @@ LLM/
 
 ## ⚡ Команды одной строкой
 
-### Запустить всё сразу:
-
-**Терминал 1 - vLLM сервер:**
 ```bash
-python start_vllm_server.py --model facebook/opt-1.3b
-```
+# Поднять весь стек (MLflow + inference + Prometheus)
+docker compose up --build
 
-**Терминал 2 - Тест:**
-```bash
-sleep 60 && python test_vllm_server.py
-```
+# Проверить генерацию
+curl -X POST http://localhost:8080/generate -H "Content-Type: application/json" \
+  -d '{"prompt":"Hello, world!","max_tokens":32}'
 
-**Терминал 3 - Jupyter:**
-```bash
+# Открыть ноутбук с заданием
 jupyter notebook hw9_vllm_mlflow.ipynb
-```
 
-**Терминал 4 - MLflow (после выполнения ноутбука):**
-```bash
-mlflow ui
+# Остановить
+docker compose down
 ```
 
 ---
 
 ## 🐛 Быстрое решение проблем
 
-### Сервер не запускается
-```bash
-# Проверьте, свободен ли порт
-netstat -ano | findstr :8000
+### `docker compose up` падает на inference
+Проверьте, что в `.env` задан `OPENROUTER_API_KEY`. Ключ подставляется в
+переменную `VLLM_API_KEY` контейнера через интерполяцию compose.
 
-# Попробуйте другой порт
-python start_vllm_server.py --port 8001
-```
+### `/generate` → 401/403 от бэкенда
+Ключ OpenRouter недействителен или исчерпан лимит. Проверьте ключ на
+https://openrouter.ai/settings/keys.
 
-### Out of Memory
-```bash
-# Используйте самую лёгкую модель
-python start_vllm_server.py --model facebook/opt-125m --device cpu
-```
+### `/generate` → 429 (rate limit)
+Выбранная модель перегружена. Смените `DEFAULT_MODEL` в
+[docker-compose.yml](docker-compose.yml) на другую платную модель.
 
-### Модель долго грузится
-**Это нормально!** Первая загрузка занимает 5-15 минут.
+### MLflow-run не появляется / 403 «DNS rebinding»
+Пересоберите mlflow (`docker compose up -d --build mlflow`) — сервер запускается
+с `--allowed-hosts=*`, что разрешает обращения по хосту `mlflow:5000`.
+
+### Порт занят
+Занятый порт (5000/8080/9090) освободите или поменяйте маппинг в compose.
 
 ---
 
 ## ✅ Готово!
 
 Теперь вы можете:
-- ✅ Локально запускать LLM через vLLM
-- ✅ Взаимодействовать через OpenAI API
-- ✅ Трекать эксперименты в MLflow
+- ✅ Гонять инференс через OpenAI-совместимый бэкенд (OpenRouter)
+- ✅ Трекать эксперименты в MLflow (`vllm-inference`)
+- ✅ Снимать метрики в Prometheus (`llm_requests_total`, latency и др.)
 - ✅ Использовать LLM-as-a-Judge паттерн
 
 **Если остались вопросы, смотрите [HW9_README.md](HW9_README.md)**

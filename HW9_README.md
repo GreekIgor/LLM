@@ -39,6 +39,12 @@ pip install pandas numpy matplotlib seaborn
 
 ### Часть 1: Развёртка vLLM сервера
 
+> ⚠️ **На текущем железе локальный vLLM не запускается** (нет Windows-сборки; GPU
+> Quadro P2000 имеет compute capability 6.1 < требуемых 7.5). Команды ниже —
+> из оригинального задания и работают только на машине с поддерживаемым GPU
+> (T4 / RTX 20xx+ / A100 …) под Linux/WSL2. Рабочий способ здесь — Docker Compose
+> с бэкендом OpenRouter, см. раздел [«Запуск стека»](#запуск-стека-docker-compose-бэкенд--openrouter) ниже.
+
 #### Способ 1: Через Python скрипт
 
 ```bash
