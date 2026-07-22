@@ -1,4 +1,4 @@
-# ДЗ-17: Извлечение сущностей и событий из текстов (NER + Information Extraction)
+# ДЗ-18: Извлечение сущностей и событий из текстов (NER + Information Extraction)
 
 Извлекаем структурированную информацию (сущности и отношения) из коммерческих контрактов
 **[CUAD](https://huggingface.co/datasets/theatticusproject/cuad)** с помощью локально
