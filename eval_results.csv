@@ -1,0 +1,8 @@
+question,answer,rating,expected_quality
+What is the capital of Germany?,Berlin is the capital of Germany.,5,high
+Who wrote Romeo and Juliet?,William Shakespeare wrote Romeo and Juliet.,5,high
+What is 2 + 2?,4,5,high
+What is the largest planet in our solar system?,Jupiter is the largest planet.,5,high
+When did World War II end?,World War II ended in 1945.,5,high
+What is the capital of Germany?,Germany is a country in Europe.,2,low
+Who wrote Romeo and Juliet?,A famous play.,1,low

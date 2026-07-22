@@ -1,0 +1,132 @@
+{
+  "best_model": "qwen/qwen-2.5-7b-instruct",
+  "best_score": 0.7113636363636363,
+  "all_results": [
+    {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "metrics": {
+        "f1_mean": 0.7113636363636363,
+        "f1_std": 0.12393717120330348,
+        "em_mean": 0.0,
+        "latency_mean": 1.4793759999796747,
+        "latency_p95": 1.7415633001364768,
+        "samples_evaluated": 5,
+        "samples_successful": 5
+      },
+      "predictions": [
+        {
+          "question": "What does Kubernetes automate?",
+          "context": "Kubernetes is an open-source system for automating deployment, scaling, and management of containeri...",
+          "reference": "deployment, scaling, and management of containerized applications",
+          "predicted": "Kubernetes automates deployment, scaling, and management of containerized applications",
+          "f1": 0.8750000000000001,
+          "em": 0.0,
+          "latency": 1.4539156998507679
+        },
+        {
+          "question": "What is vLLM designed for?",
+          "context": "vLLM is a high-throughput and memory-efficient inference and serving engine for large language model...",
+          "reference": "inference and serving engine for large language models",
+          "predicted": "vLLM is designed for high-throughput and memory-efficient inference and serving of large language models",
+          "f1": 0.6363636363636364,
+          "em": 0.0,
+          "latency": 1.7415633001364768
+        },
+        {
+          "question": "What does MLflow manage?",
+          "context": "MLflow is an open-source platform for managing the end-to-end machine learning lifecycle....",
+          "reference": "the end-to-end machine learning lifecycle",
+          "predicted": "MLflow manages the end-to-end machine learning lifecycle",
+          "f1": 0.8333333333333333,
+          "em": 0.0,
+          "latency": 1.4122196999378502
+        },
+        {
+          "question": "What is Python known for?",
+          "context": "Python is a high-level, interpreted programming language known for its simplicity and readability....",
+          "reference": "simplicity and readability",
+          "predicted": "Python is known for its simplicity and readability",
+          "f1": 0.5454545454545454,
+          "em": 0.0,
+          "latency": 1.504907499998808
+        },
+        {
+          "question": "What does Docker enable?",
+          "context": "Docker enables developers to package applications into containers\u2014standardized executable components...",
+          "reference": "package applications into containers",
+          "predicted": "Docker enables developers to package applications into containers",
+          "f1": 0.6666666666666666,
+          "em": 0.0,
+          "latency": 1.2842737999744713
+        }
+      ]
+    },
+    {
+      "model_id": "meta-llama/llama-3.2-1b-instruct",
+      "metrics": {
+        "f1_mean": 0.49790209790209794,
+        "f1_std": 0.3339525114681552,
+        "em_mean": 0.2,
+        "latency_mean": 1.047316380031407,
+        "latency_p95": 1.2886479999870062,
+        "samples_evaluated": 5,
+        "samples_successful": 5
+      },
+      "predictions": [
+        {
+          "question": "What does Kubernetes automate?",
+          "context": "Kubernetes is an open-source system for automating deployment, scaling, and management of containeri...",
+          "reference": "deployment, scaling, and management of containerized applications",
+          "predicted": "Deployment, scaling, and management of containerized applications",
+          "f1": 1.0,
+          "em": 1.0,
+          "latency": 1.2886479999870062
+        },
+        {
+          "question": "What is vLLM designed for?",
+          "context": "vLLM is a high-throughput and memory-efficient inference and serving engine for large language model...",
+          "reference": "inference and serving engine for large language models",
+          "predicted": "vLLM is designed for high-throughput and memory-efficient inference and serving of large language models",
+          "f1": 0.6363636363636364,
+          "em": 0.0,
+          "latency": 1.0475547001697123
+        },
+        {
+          "question": "What does MLflow manage?",
+          "context": "MLflow is an open-source platform for managing the end-to-end machine learning lifecycle....",
+          "reference": "the end-to-end machine learning lifecycle",
+          "predicted": "Machine learning model development, deployment, monitoring, and tracking",
+          "f1": 0.3076923076923077,
+          "em": 0.0,
+          "latency": 0.918735499959439
+        },
+        {
+          "question": "What is Python known for?",
+          "context": "Python is a high-level, interpreted programming language known for its simplicity and readability....",
+          "reference": "simplicity and readability",
+          "predicted": "Python is known for its simplicity and readability",
+          "f1": 0.5454545454545454,
+          "em": 0.0,
+          "latency": 1.18167470023036
+        },
+        {
+          "question": "What does Docker enable?",
+          "context": "Docker enables developers to package applications into containers\u2014standardized executable components...",
+          "reference": "package applications into containers",
+          "predicted": "Containerization",
+          "f1": 0.0,
+          "em": 0.0,
+          "latency": 0.7999689998105168
+        }
+      ]
+    }
+  ],
+  "config": {
+    "vllm_base_url": "https://openrouter.ai/api",
+    "models": [
+      "qwen/qwen-2.5-7b-instruct",
+      "meta-llama/llama-3.2-1b-instruct"
+    ],
+    "num_samples": 5
+  }
+}
