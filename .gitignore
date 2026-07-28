@@ -12,3 +12,10 @@ __pycache__/
 # Мусор
 1.0.0
 volumes/
+
+# Артефакты обучения (finetune_lora.ipynb)
+qwen2.5-1.5b-lora/
+qwen2.5-1.5b-lora-adapter/
+qwen2.5-1.5b-merged/
+dialogues_cache_*.json
+.claude/
