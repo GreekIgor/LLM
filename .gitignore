@@ -14,8 +14,9 @@ __pycache__/
 volumes/
 
 # Артефакты обучения (finetune_lora.ipynb)
+lora-out/
 qwen2.5-1.5b-lora/
-qwen2.5-1.5b-lora-adapter/
-qwen2.5-1.5b-merged/
+*-lora-adapter/
+*-merged/
 dialogues_cache_*.json
 .claude/

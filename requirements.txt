@@ -1,14 +1,23 @@
 # ДЗ-15: LoRA fine-tuning + интеграция LLM с внешними инструментами
 
 # ── Fine-tuning (нужен GPU/CUDA — обычно Google Colab T4) ────────────────────
-torch>=2.2.0
-# ВНИМАНИЕ: верхняя граница обязательна — transformers>=5.0 на импорте безусловно обращается
-# к torch.float8_e8m0fnu, которого нет в torch<2.7, и падает с ModuleNotFoundError на Qwen2ForCausalLM.
-transformers>=4.44.0,<5.0.0
+# transformers>=5.0 на импорте обращается к torch.float8_e8m0fnu, которого нет в
+# torch<2.7 — с новым transformers нужен и достаточно свежий torch.
+torch>=2.6.0
+transformers>=4.44.0
 peft>=0.12.0            # LoRA / параметрически-эффективный fine-tuning
 # В trl>=1.0 параметр SFTConfig переименован: max_seq_length -> max_length (см. finetune_lora.ipynb)
 trl>=0.10.0            # SFTTrainer для supervised fine-tuning
 datasets>=2.20.0       # загрузка датасета (lmsys-chat-1m и др.)
+# ВАЖНО: верхняя граница на pyarrow обязательна.
+# pyarrow 24.0.0 на Windows + Python 3.13 роняет процесс с ACCESS_VIOLATION (0xC0000005)
+# в arrow.dll при работе с Arrow-таблицами. В Jupyter это выглядит как
+# "The Kernel crashed while executing code" без traceback.
+# Проверено на одинаковой нагрузке (25 циклов Dataset.from_list + map):
+#   pyarrow 24.0.0 -> Segmentation fault (exit 139)
+#   pyarrow 21.0.0 -> 25/25 OK (exit 0)
+# datasets 5.x требует pyarrow>=21, поэтому 21.x — единственная рабочая версия.
+pyarrow>=21.0.0,<22
 accelerate>=0.33.0
 bitsandbytes>=0.43.0   # 4-bit квантование (QLoRA), нужна CUDA. На Windows работает (проверено, есть готовые wheels).
 
