@@ -5,6 +5,6 @@ __pycache__/
 .ipynb_checkpoints/
 .pytest_cache/
 .env.local
-
+.claude/
 # Milvus / etcd / MinIO runtime data (docker volumes)
 volumes/

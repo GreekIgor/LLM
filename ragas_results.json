@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T11:33:11.066537+00:00",
+  "generated_at": "2026-08-05T10:38:40.764315+00:00",
   "metrics_used": [
     "faithfulness",
     "answer_relevancy",
@@ -12,7 +12,7 @@
   },
   "summary": {
     "faithfulness": 1.0,
-    "answer_relevancy": 0.7591657007756756,
+    "answer_relevancy": 0.8935798676801064,
     "context_recall": 1.0
   },
   "gates_passed": true,
@@ -20,7 +20,7 @@
   "samples": [
     {
       "question": "Кто создал язык Python и в каком году вышел первый релиз?",
-      "answer": "Язык программирования Python создал Гвидо ван Россум. Первый публичный релиз Python 0.9.0 состоялся в феврале 1991 года.",
+      "answer": "Язык Python создал Гвидо ван Россум, а первый публичный релиз Python 0.9.0 состоялся в феврале 1991 года.",
       "reference": "Язык Python создал Гвидо ван Россум, первый публичный релиз вышел в феврале 1991 года.",
       "contexts": [
         "Язык программирования Python создал Гвидо ван Россум. Первый публичный релиз Python 0.9.0 состоялся в феврале 1991 года. Название языка отсылает не к змее, а к британскому комедийному шоу 'Monty Python's Flying Circus'.",
@@ -29,7 +29,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.6940334433654399,
+        "answer_relevancy": 0.9544268595637632,
         "context_recall": 1.0
       }
     },
@@ -44,7 +44,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.9111543337044393,
+        "answer_relevancy": 1.0,
         "context_recall": 1.0
       }
     },
@@ -59,7 +59,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.9434213306207315,
+        "answer_relevancy": 0.9422259647578436,
         "context_recall": 1.0
       }
     },
@@ -89,7 +89,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.578080667987824,
+        "answer_relevancy": 0.566643868249434,
         "context_recall": 1.0
       }
     },
@@ -103,7 +103,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.7693407763119192,
+        "answer_relevancy": 0.7705463466158088,
         "context_recall": 1.0
       }
     },
@@ -117,7 +117,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.7688306221346647,
+        "answer_relevancy": 0.8781156585098002,
         "context_recall": 1.0
       }
     },
@@ -132,7 +132,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.6514893169548722,
+        "answer_relevancy": 0.9366282202808768,
         "context_recall": 1.0
       }
     },
@@ -147,7 +147,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.8514466638690797,
+        "answer_relevancy": 0.9482505193024271,
         "context_recall": 1.0
       }
     },
@@ -162,7 +162,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.6939701239220546,
+        "answer_relevancy": 0.9788163823696824,
         "context_recall": 1.0
       }
     },
@@ -177,7 +177,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.6937486209038511,
+        "answer_relevancy": 0.9902983335512697,
         "context_recall": 1.0
       }
     },
@@ -192,7 +192,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.8635225189673571,
+        "answer_relevancy": 0.8583142734650928,
         "context_recall": 1.0
       }
     },
@@ -207,7 +207,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.7810180563969523,
+        "answer_relevancy": 0.999999999999999,
         "context_recall": 1.0
       }
     },
@@ -222,7 +222,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.7549848930157591,
+        "answer_relevancy": 0.8926400887323075,
         "context_recall": 1.0
       }
     },
@@ -235,7 +235,7 @@
       ],
       "scores": {
         "faithfulness": 1.0,
-        "answer_relevancy": 0.7456526436768964,
+        "answer_relevancy": 0.9999999999999994,
         "context_recall": 1.0
       }
     }
