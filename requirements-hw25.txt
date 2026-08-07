@@ -1,0 +1,19 @@
+# ДЗ-25: Поиск изображений по тексту (CLIP + FAISS)
+# Всё выполняется локально на CPU — внешних API/ключей не требуется.
+
+torch>=2.6.0
+transformers>=4.44.0
+datasets>=3.0.0            # streaming-загрузка Visual Genome
+sentence-transformers>=3.0.0
+faiss-cpu>=1.8.0
+pillow>=10.0.0
+pandas>=2.2.0
+numpy>=1.26.0
+matplotlib>=3.8.0
+tqdm>=4.66.0
+
+# Примечание (см. hw_16/requirements.txt): на Windows + Python 3.13 версия
+# pyarrow==24.0.0 в отдельных сценариях интенсивной работы с Arrow-таблицами
+# (Dataset.from_list/.map в цикле) приводила к ACCESS_VIOLATION в arrow.dll.
+# В этом ноутбуке такой паттерн не используется (одна streaming-загрузка),
+# но при падении ядра без traceback — первое, что стоит проверить.
