@@ -9,8 +9,5 @@ __pycache__/
 .ipynb_checkpoints/
 .pytest_cache/
 
-# Локальные файлы Claude Code
-.claude/
-
 # Мусор
 1.0.0
